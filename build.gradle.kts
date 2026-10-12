@@ -6,7 +6,7 @@ plugins {
 
 group = "io.rxbridge"
 version = "0.1.0-SNAPSHOT"
-description = "rxbridge-enrollment-service"
+description = "RxBridge enrollment service: patients, medications and program enrollments REST API"
 
 java {
     toolchain {
