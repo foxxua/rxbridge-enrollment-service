@@ -89,6 +89,9 @@ CREATE TABLE enrollment (
             END
         ),
 
+    CONSTRAINT chk_enrollment_other_reason_not_blank_trimmed
+        CHECK ( other_reason ~ '\S' AND other_reason !~ '^\s|\s$' ),
+
     CONSTRAINT chk_enrollment_other_reason_null_or_not
         CHECK (
             CASE close_reason

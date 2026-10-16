@@ -1,3 +1,9 @@
 spring:
   application:
     name: rxbridge-enrollment-service
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+rxbridge:
+  time-zone: America/New_York
