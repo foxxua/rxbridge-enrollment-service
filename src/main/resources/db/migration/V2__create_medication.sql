@@ -9,6 +9,18 @@ CREATE TABLE medication (
     updated_at    timestamptz   NOT NULL,
     version       integer       NOT NULL DEFAULT 0,
 
-    CONSTRAINT chk_medication_code  CHECK  ( code ~ '^M\d{6}$' ),
-    CONSTRAINT uq_medication_code UNIQUE (code)
+    CONSTRAINT chk_medication_name_not_blank_trimmed
+        CHECK ( name ~ '\S' AND name !~ '^\s|\s$' ),
+
+    CONSTRAINT chk_medication_description_not_blank_trimmed
+        CHECK ( description ~ '\S' AND description !~ '^\s|\s$' ),
+
+    CONSTRAINT chk_medication_code
+        CHECK  ( code ~ '^M\d{6}$' ),
+
+    CONSTRAINT chk_medication_side_effects_not_blank_trimmed
+        CHECK ( side_effects ~ '\S' AND side_effects !~ '^\s|\s$' ),
+
+    CONSTRAINT uq_medication_code
+        UNIQUE (code)
 );
