@@ -2,6 +2,8 @@ package io.rxbridge.enrollment.patient;
 
 import java.time.LocalDate;
 
+import static io.rxbridge.enrollment.patient.PatientConstants.*;
+
 public final class PatientFixtures {
 
     private static final String    DEFAULT_FIRST_NAME = "William";
@@ -34,8 +36,51 @@ public final class PatientFixtures {
         return patient;
     }
 
+    public static Patient aFemalePatientWithoutRegion() {
+        return aPatientBuilder()
+            .personName(new PersonName("Agatha", "Christie"))
+            .email("agatha_christie@example.com")
+            .address(new Address(
+                "Schönhauser Allee 36-37",
+                "Berlin",
+                "DE",
+                null,
+                "D-10435"))
+            .sex(Sex.FEMALE)
+            .birthdate(LocalDate.of(1995, 12, 4))
+            .build();
+    }
+
+    public static Patient anInactiveUnknownSexPatient() {
+        Patient patient = aPatientBuilder()
+            .sex(Sex.UNKNOWN)
+            .build();
+        patient.deactivate();
+
+        return patient;
+    }
+
+    public static Patient aPatientWithMaxLengthFields() {
+        return aPatientBuilder()
+            .personName(new PersonName(
+                "a".repeat(NAME_MAX_LENGTH),
+                "b".repeat(NAME_MAX_LENGTH)))
+            .email("c".repeat(EMAIL_MAX_LENGTH - "@example.com".length()) + "@example.com")
+            .address(new Address(
+                "d".repeat(STREET_MAX_LENGTH),
+                "e".repeat(CITY_MAX_LENGTH),
+                "AU",
+                "f".repeat(REGION_MAX_LENGTH),
+                "g".repeat(ZIPCODE_MAX_LENGTH)))
+            .build();
+    }
+
     public static PersonName aPersonName() {
         return new PersonName(DEFAULT_FIRST_NAME, DEFAULT_LAST_NAME);
+    }
+
+    public static String anEmail() {
+        return DEFAULT_EMAIL;
     }
 
     public static Address anAddress() {
@@ -48,13 +93,21 @@ public final class PatientFixtures {
         );
     }
 
+    public static Sex aSex() {
+        return DEFAULT_SEX;
+    }
+
+    public static LocalDate aBirthdate() {
+        return DEFAULT_BIRTHDATE;
+    }
+
     public static final class PatientBuilder {
 
         private PersonName personName = aPersonName();
-        private String email          = DEFAULT_EMAIL;
+        private String email          = anEmail();
         private Address address       = anAddress();
-        private Sex sex               = DEFAULT_SEX;
-        private LocalDate birthdate   = DEFAULT_BIRTHDATE;
+        private Sex sex               = aSex();
+        private LocalDate birthdate   = aBirthdate();
         private LocalDate today       = TODAY;
 
         private PatientBuilder() { }
