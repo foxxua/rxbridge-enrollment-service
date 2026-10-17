@@ -17,7 +17,7 @@ public final class PatientConstants {
     public static final int SEX_MAX_LENGTH = 20;
 
     // Regex patterns
-    public static final String EMAIL_PATTERN = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}";
+    public static final String EMAIL_PATTERN = "[a-z0-9._%+-]+@[a-z0-9.-]+\\.[a-z]{2,}";
     public static final String COUNTRY_PATTERN = "[A-Z]{2}";
 
     private PatientConstants() { }
