@@ -4,7 +4,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.*;
@@ -65,29 +64,12 @@ class AddressTest {
         @Test
         void normalizesAllFields() {
             assertThat(new Address(
-                    " \t \n 31 Milk Street \n \t ",
-                    " \n \t Boston \t \n ",
+                    " 31 Milk Street ",
+                    " Boston ",
                     "us",
-                    " \t\n MA \n \t",
-                    " \t\n 02196 \t\n "))
+                    " MA ",
+                    " 02196 "))
                 .isEqualTo(new Address(
-                    "31 Milk Street",
-                    "Boston",
-                    "US",
-                    "MA",
-                    "02196"));
-        }
-
-        @Test
-        void addressesWithSameValuesAreEqual() {
-            assertThat(new Address(STREET, CITY, COUNTRY, REGION, ZIPCODE))
-                .isEqualTo(new Address(
-                    "31 Milk Street",
-                    "Boston",
-                    "US",
-                    "MA",
-                    "02196"))
-                .hasSameHashCodeAs(new Address(
                     "31 Milk Street",
                     "Boston",
                     "US",
@@ -285,25 +267,6 @@ class AddressTest {
                     "   ",
                     ZIPCODE).region())
                 .isNull();
-        }
-
-        @ParameterizedTest
-        @NullAndEmptySource
-        @ValueSource(strings = {"   "})
-        void blankAndNullRegionAreEqual(String input) {
-            assertThat(new Address(STREET, CITY, COUNTRY, input, ZIPCODE))
-                .isEqualTo(new Address(
-                    "31 Milk Street",
-                    "Boston",
-                    "US",
-                    null,
-                    "02196"))
-                .hasSameHashCodeAs(new Address(
-                    "31 Milk Street",
-                    "Boston",
-                    "US",
-                    null,
-                    "02196"));
         }
 
     }

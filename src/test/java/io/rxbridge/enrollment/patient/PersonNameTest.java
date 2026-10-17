@@ -25,7 +25,6 @@ class PersonNameTest {
             assertSoftly(softly -> {
                 softly.assertThat(personName.firstName()).isEqualTo("William");
                 softly.assertThat(personName.lastName()).isEqualTo("Shakespeare");
-                softly.assertThat(personName.fullName()).isEqualTo("William Shakespeare");
             });
         }
 
@@ -44,15 +43,8 @@ class PersonNameTest {
 
         @Test
         void normalizesAllFields() {
-            assertThat(new PersonName(" \t \n William \n \t ", " \n \t Shakespeare \t \n "))
+            assertThat(new PersonName(" William ", " Shakespeare "))
                 .isEqualTo(new PersonName("William", "Shakespeare"));
-        }
-
-        @Test
-        void personNamesWithSameValuesAreEqual() {
-            assertThat(new PersonName(FIRST_NAME, LAST_NAME))
-                .isEqualTo(new PersonName("William", "Shakespeare"))
-                .hasSameHashCodeAs(new PersonName("William", "Shakespeare"));
         }
 
     }

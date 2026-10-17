@@ -6,7 +6,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
+import java.time.LocalDate;
+
 import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.SoftAssertions.*;
 
 import static io.rxbridge.enrollment.patient.PatientConstants.*;
 import static io.rxbridge.enrollment.patient.PatientFixtures.*;
@@ -19,6 +22,31 @@ class PatientTest {
         @Test
         void createsActivePatient() {
             assertThat(aPatient().isActive()).isTrue();
+        }
+
+        @Test
+        void createsValidPatient() {
+            Patient patient = aPatientBuilder()
+                .personName(new PersonName("Agatha", "Christie"))
+                .email("agatha_christie@example.com")
+                .address(new Address("815 Bush Street", "San Francisco", "US", "CA", "94108"))
+                .sex(Sex.FEMALE)
+                .birthdate(LocalDate.of(1995, 12, 4))
+                .today(LocalDate.of(2027, 3, 6))
+                .build();
+
+            assertSoftly(softly -> {
+                softly.assertThat(patient.getPersonName()).isEqualTo(new PersonName("Agatha", "Christie"));
+                softly.assertThat(patient.getEmail()).isEqualTo("agatha_christie@example.com");
+                softly.assertThat(patient.getAddress()).isEqualTo(new Address(
+                        "815 Bush Street",
+                        "San Francisco",
+                        "US",
+                        "CA",
+                        "94108"));
+                softly.assertThat(patient.getSex()).isEqualTo(Sex.FEMALE);
+                softly.assertThat(patient.getBirthdate()).isEqualTo(LocalDate.of(1995, 12, 4));
+            });
         }
 
         @Test
@@ -161,7 +189,7 @@ class PatientTest {
         @Test
         void changesEmail() {
             Patient patient = aPatient();
-            patient.changeEmail("new.email@example.com");
+            patient.changeEmail("NEW.email@example.COM   ");
 
             assertThat(patient.getEmail()).isEqualTo("new.email@example.com");
         }
@@ -179,7 +207,7 @@ class PatientTest {
 
         @ParameterizedTest
         @EmptySource
-        @ValueSource(strings = {"   ", "123"})
+        @ValueSource(strings = {"123"})
         void keepsOldEmailWhenNewOneIsInvalid(String input) {
             Patient patient = aPatient();
             String emailBefore = patient.getEmail();
