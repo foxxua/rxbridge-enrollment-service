@@ -21,8 +21,8 @@ CREATE TABLE patient (
     CONSTRAINT chk_patient_last_name_not_blank_trimmed
         CHECK ( last_name ~ '\S' AND last_name !~ '^\s|\s$' ),
 
-    CONSTRAINT chk_patient_email_not_blank_trimmed
-        CHECK ( email ~ '\S' AND email !~ '^\s|\s$' ),
+    CONSTRAINT chk_patient_email
+        CHECK ( email ~ '^[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}$' ),
 
     CONSTRAINT chk_patient_address_street_not_blank_trimmed
         CHECK ( address_street ~ '\S' AND address_street !~ '^\s|\s$' ),
