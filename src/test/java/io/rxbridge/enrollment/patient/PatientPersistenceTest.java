@@ -191,7 +191,7 @@ class PatientPersistenceTest {
                 .doesNotThrowAnyException();
         }
 
-        int insertPatient(Map<String, Object> overrides) {
+        private int insertPatient(Map<String, Object> overrides) {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("first_name"      , "William");
             row.put("last_name"       , "Shakespeare");
