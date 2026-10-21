@@ -3,6 +3,7 @@ package io.rxbridge.enrollment.medication;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.assertj.core.api.Assertions.*;
@@ -21,14 +22,18 @@ class MedicationTest {
             assertThat(aMedication().isActive()).isTrue();
         }
 
-        @Test
-        void createsValidMedicationStripValues() {
+        @ParameterizedTest
+        @CsvSource(delimiter = '|', textBlock = """
+            ' m999999 ' | M999999
+            M123456     | M123456
+            """)
+        void createsValidMedicationStripValues(String input, String expectedCode) {
             Medication medication = aMedicationBuilder()
                 .name(" Neuro-Glitchin ")
                 .description("A futuristic bio-synthetic stimulant used to temporarily " +
                     "overclock human neural pathways for rapid data processing and cybernetic " +
                     "enhancement.   ")
-                .code(" M999999 ")
+                .code(input)
                 .sideEffects("""
                     \t
                     It can cause severe sensory overload and painful phantom audio glitches in the user's ears.
@@ -43,7 +48,7 @@ class MedicationTest {
                     "A futuristic bio-synthetic stimulant used to temporarily overclock human " +
                     "neural pathways for rapid data processing and cybernetic enhancement."
                 );
-                softly.assertThat(medication.getCode()).isEqualTo("M999999");
+                softly.assertThat(medication.getCode()).isEqualTo(expectedCode);
                 softly.assertThat(medication.getSideEffects()).isEqualTo(
                     "It can cause severe sensory overload and painful phantom audio glitches in the user's ears.\n" +
                         "Sudden depletion of neurotransmitters may lead to unexpected emotional crashes and temporary memory wipes.\n" +
@@ -165,7 +170,18 @@ class MedicationTest {
 
         @ParameterizedTest
         @ValueSource(strings = {
-            "1111111", "MMMMMMM", "1MMMMMM", "A123456", "m123456"
+            "M123456", "M000000", "M999999"
+        })
+        void acceptsValidCode(String input) {
+            assertThat(aMedicationBuilder()
+                    .code(input)
+                    .build().getCode())
+                .isEqualTo(input);
+        }
+
+        @ParameterizedTest
+        @ValueSource(strings = {
+            "1111111", "MMMMMMM", "1MMMMMM", "A123456"
         })
         void rejectsInvalid(String input) {
             assertThatIllegalArgumentException()

@@ -11,6 +11,8 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.util.Locale;
+
 import static io.rxbridge.enrollment.common.validation.DomainPreconditions.*;
 import static io.rxbridge.enrollment.medication.MedicationConstants.*;
 
@@ -76,7 +78,12 @@ public class Medication extends BaseEntity {
 
     private String validateCode(String code) {
         code = requireText(code, "code", CODE_LENGTH);
+        code = normalizeCode(code);
         return requireMatch(code, "code", CODE_PATTERN);
+    }
+
+    public static String normalizeCode(String code) {
+        return code.strip().toUpperCase(Locale.ROOT);
     }
 
 }

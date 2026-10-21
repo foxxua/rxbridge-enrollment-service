@@ -119,10 +119,14 @@ public class Patient extends BaseEntity {
 
     private String validateEmail(String email) {
         email = requireText(email, "email", EMAIL_MAX_LENGTH);
-        email = email.toLowerCase(Locale.ROOT);
+        email = normalizeEmail(email);
         email = requireMatch(email, "email", EMAIL_PATTERN);
 
         return email;
+    }
+
+    public static String normalizeEmail(String email) {
+        return email.strip().toLowerCase(Locale.ROOT);
     }
 
 }

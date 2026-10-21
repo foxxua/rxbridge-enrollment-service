@@ -19,7 +19,6 @@ repositories {
 }
 
 dependencies {
-    implementation("org.projectlombok:lombok")
     compileOnly("org.projectlombok:lombok")
     annotationProcessor("org.projectlombok:lombok")
     implementation("org.springframework.boot:spring-boot-starter-data-jpa")
