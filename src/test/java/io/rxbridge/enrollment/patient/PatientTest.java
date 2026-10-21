@@ -263,8 +263,24 @@ class PatientTest {
         }
 
         @Test
+        void staysInactiveWhenDeactivatedAgain() {
+            Patient patient = anInactivePatient();
+            patient.deactivate();
+
+            assertThat(patient.isActive()).isFalse();
+        }
+
+        @Test
         void activatesPatient() {
             Patient patient = anInactivePatient();
+            patient.activate();
+
+            assertThat(patient.isActive()).isTrue();
+        }
+
+        @Test
+        void staysActiveWhenActivatedAgain() {
+            Patient patient = aPatient();
             patient.activate();
 
             assertThat(patient.isActive()).isTrue();
