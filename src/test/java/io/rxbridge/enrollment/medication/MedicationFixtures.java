@@ -1,5 +1,7 @@
 package io.rxbridge.enrollment.medication;
 
+import static io.rxbridge.enrollment.medication.MedicationConstants.*;
+
 public class MedicationFixtures {
 
     private static final String DEFAULT_NAME         = "Aspirin";
@@ -58,6 +60,22 @@ public class MedicationFixtures {
         ibuprofen.deactivate();
 
         return ibuprofen;
+    }
+
+    public static Medication aMedicationWithMaxLengthFields() {
+        return aMedicationBuilder()
+            .name("a".repeat(NAME_MAX_LENGTH))
+            .description("b".repeat(DESCRIPTION_MAX_LENGTH))
+            .code("M123456")
+            .sideEffects("c".repeat(SIDE_EFFECTS_MAX_LENGTH))
+            .build();
+    }
+
+    public static Medication aMedicationWithNullableFields() {
+        return aMedicationBuilder()
+            .description(null)
+            .sideEffects(null)
+            .build();
     }
 
     public static String aName() {
