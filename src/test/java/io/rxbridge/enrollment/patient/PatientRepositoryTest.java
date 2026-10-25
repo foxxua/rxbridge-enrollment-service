@@ -27,7 +27,6 @@ import static io.rxbridge.enrollment.patient.PatientFixtures.*;
 @Import(TestcontainersConfiguration.class)
 class PatientRepositoryTest {
 
-    static final LocalDate BIRTHDATE = LocalDate.of(1992, 3, 3);
     static final Instant BASE_TIME = Instant.parse("2026-01-01T10:00:00Z");
     static final Sort NEWEST_FIRST = Sort.by(
         Sort.Order.desc("createdAt"),

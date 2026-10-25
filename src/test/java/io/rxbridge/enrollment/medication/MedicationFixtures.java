@@ -2,7 +2,7 @@ package io.rxbridge.enrollment.medication;
 
 import static io.rxbridge.enrollment.medication.MedicationConstants.*;
 
-public class MedicationFixtures {
+public final class MedicationFixtures {
 
     private static final String DEFAULT_NAME         = "Aspirin";
     private static final String DEFAULT_DESCRIPTION  = "A nonsteroidal anti-inflammatory drug " +
@@ -78,28 +78,28 @@ public class MedicationFixtures {
             .build();
     }
 
-    public static String aName() {
+    public static String aMedicationName() {
         return DEFAULT_NAME;
     }
 
-    public static String aDescription() {
+    public static String aMedicationDescription() {
         return DEFAULT_DESCRIPTION;
     }
 
-    public static String aCode() {
+    public static String aMedicationCode() {
         return DEFAULT_CODE;
     }
 
-    public static String aSideEffects() {
+    public static String aMedicationSideEffects() {
         return DEFAULT_SIDE_EFFECTS;
     }
 
     public static final class MedicationBuilder {
 
-        private String name        = aName();
-        private String description = aDescription();
-        private String code        = aCode();
-        private String sideEffects = aSideEffects();
+        private String name        = aMedicationName();
+        private String description = aMedicationDescription();
+        private String code        = aMedicationCode();
+        private String sideEffects = aMedicationSideEffects();
 
         private MedicationBuilder() { }
 

@@ -27,6 +27,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import static io.rxbridge.enrollment.patient.PatientFixtures.*;
 import static io.rxbridge.enrollment.patient.PatientConstants.*;
+import static io.rxbridge.enrollment.common.TestDates.*;
 
 @DataJpaTest
 @Import(TestcontainersConfiguration.class)
@@ -202,7 +203,7 @@ class PatientPersistenceTest {
             row.put("address_region"  , "MA");
             row.put("address_zipcode" , "02196");
             row.put("sex"             , "MALE");
-            row.put("birthdate"       , aBirthdate());
+            row.put("birthdate"       , BIRTHDATE);
             row.put("active"          , true);
             row.putAll(overrides);
 

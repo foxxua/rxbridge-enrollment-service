@@ -49,17 +49,30 @@ public final class DomainPreconditions {
         return text;
     }
 
-    public static LocalDate requireNotFuture(LocalDate localDate, LocalDate today, String field) {
-        Objects.requireNonNull(localDate, field);
+    public static LocalDate requireNotFuture(LocalDate date, LocalDate today, String field) {
+        Objects.requireNonNull(date, field);
         Objects.requireNonNull(today, field + " today");
 
-        if (localDate.isAfter(today)) {
+        if (date.isAfter(today)) {
             throw new IllegalArgumentException(
                 "%s must not be in the future".formatted(field)
             );
         }
 
-        return localDate;
+        return date;
+    }
+
+    public static LocalDate requireNotBefore(LocalDate date, LocalDate lowerBound, String field) {
+        Objects.requireNonNull(date, field);
+        Objects.requireNonNull(lowerBound, field + " lowerBound");
+
+        if (date.isBefore(lowerBound)) {
+            throw new IllegalArgumentException(
+                "%s must not be before %s".formatted(field, lowerBound)
+            );
+        }
+
+        return date;
     }
 
 }

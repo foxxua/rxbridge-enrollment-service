@@ -11,13 +11,15 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.*;
 
 import static io.rxbridge.enrollment.common.validation.DomainPreconditions.*;
+import static io.rxbridge.enrollment.common.TestDates.*;
 
 class DomainPreconditionsTest {
 
+    static final int MAX = 5;
+    static final String TEXT_PATTERN = "[A-Z]{2}";
+
     @Nested
     class RequireText {
-
-        static final int MAX = 5;
 
         @Test
         void returnsValueWithinLimits() {
@@ -79,8 +81,6 @@ class DomainPreconditionsTest {
     @Nested
     class OptionalText{
 
-        static final int MAX = 5;
-
         @Test
         void returnsValidValue() {
             assertThat(optionalText("test", "testField", MAX))
@@ -117,8 +117,6 @@ class DomainPreconditionsTest {
 
     @Nested
     class RequireMatch {
-
-        static final String TEXT_PATTERN = "[A-Z]{2}";
 
         @Test
         void returnsMatchingValue() {
@@ -157,12 +155,8 @@ class DomainPreconditionsTest {
     @Nested
     class RequireNotFuture {
 
-        static final LocalDate TODAY = LocalDate.of(2026, 10, 14);
-        static final LocalDate YESTERDAY = TODAY.minusDays(1);
-        static final LocalDate TOMORROW = TODAY.plusDays(1);
-
         @ParameterizedTest
-        @MethodSource("validLocalDates")
+        @MethodSource("todayAndPastDates")
         void acceptsTodayAndPastDates(LocalDate input) {
             assertThat(requireNotFuture(input, TODAY, "testField"))
                 .isEqualTo(input);
@@ -189,10 +183,50 @@ class DomainPreconditionsTest {
                 .withMessageContaining("testField");
         }
 
-        static Stream<LocalDate> validLocalDates() {
+        static Stream<LocalDate> todayAndPastDates() {
             return Stream.of(
                 YESTERDAY,
                 TODAY
+            );
+        }
+
+    }
+
+    @Nested
+    class RequireNotBefore {
+
+        @ParameterizedTest
+        @MethodSource("boundAndLaterDates")
+        void acceptsTodayAndFutureDates(LocalDate input) {
+            assertThat(requireNotBefore(input, TODAY, "testField"))
+                .isEqualTo(input);
+        }
+
+        @Test
+        void rejectsNullDate() {
+            assertThatNullPointerException()
+                .isThrownBy(() -> requireNotBefore(null, TODAY, "testField"))
+                .withMessageContaining("testField");
+        }
+
+        @Test
+        void rejectsNullLowerBound() {
+            assertThatNullPointerException()
+                .isThrownBy(() -> requireNotBefore(TOMORROW, null, "testField"))
+                .withMessageContaining("lowerBound");
+        }
+
+        @Test
+        void rejectsYesterday() {
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> requireNotBefore(YESTERDAY, TODAY, "testField"))
+                .withMessageContaining("testField");
+        }
+
+        static Stream<LocalDate> boundAndLaterDates() {
+            return Stream.of(
+                TODAY,
+                TOMORROW
             );
         }
 

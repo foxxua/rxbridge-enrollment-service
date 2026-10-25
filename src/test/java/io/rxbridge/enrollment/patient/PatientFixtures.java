@@ -3,6 +3,7 @@ package io.rxbridge.enrollment.patient;
 import java.time.LocalDate;
 
 import static io.rxbridge.enrollment.patient.PatientConstants.*;
+import static io.rxbridge.enrollment.common.TestDates.*;
 
 public final class PatientFixtures {
 
@@ -15,9 +16,7 @@ public final class PatientFixtures {
     private static final String    DEFAULT_REGION     = "MA";
     private static final String    DEFAULT_ZIPCODE    = "02196";
     private static final Sex       DEFAULT_SEX        = Sex.MALE;
-    private static final LocalDate DEFAULT_BIRTHDATE  = LocalDate.of(1991, 4, 11);
-
-    public static final LocalDate  TODAY              = LocalDate.of(2026, 10, 14);
+    public static final LocalDate  BIRTHDATE = LocalDate.of(1991, 4, 11);
 
     private PatientFixtures() { }
 
@@ -75,15 +74,15 @@ public final class PatientFixtures {
             .build();
     }
 
-    public static PersonName aPersonName() {
+    public static PersonName aPatientPersonName() {
         return new PersonName(DEFAULT_FIRST_NAME, DEFAULT_LAST_NAME);
     }
 
-    public static String anEmail() {
+    public static String aPatientEmail() {
         return DEFAULT_EMAIL;
     }
 
-    public static Address anAddress() {
+    public static Address aPatientAddress() {
         return new Address(
             DEFAULT_STREET,
             DEFAULT_CITY,
@@ -93,21 +92,17 @@ public final class PatientFixtures {
         );
     }
 
-    public static Sex aSex() {
+    public static Sex aPatientSex() {
         return DEFAULT_SEX;
-    }
-
-    public static LocalDate aBirthdate() {
-        return DEFAULT_BIRTHDATE;
     }
 
     public static final class PatientBuilder {
 
-        private PersonName personName = aPersonName();
-        private String email          = anEmail();
-        private Address address       = anAddress();
-        private Sex sex               = aSex();
-        private LocalDate birthdate   = aBirthdate();
+        private PersonName personName = aPatientPersonName();
+        private String email          = aPatientEmail();
+        private Address address       = aPatientAddress();
+        private Sex sex               = aPatientSex();
+        private LocalDate birthdate   = BIRTHDATE;
         private LocalDate today       = TODAY;
 
         private PatientBuilder() { }

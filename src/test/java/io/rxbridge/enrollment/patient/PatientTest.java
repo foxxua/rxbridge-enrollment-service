@@ -13,6 +13,7 @@ import static org.assertj.core.api.SoftAssertions.*;
 
 import static io.rxbridge.enrollment.patient.PatientConstants.*;
 import static io.rxbridge.enrollment.patient.PatientFixtures.*;
+import static io.rxbridge.enrollment.common.TestDates.*;
 
 class PatientTest {
 
