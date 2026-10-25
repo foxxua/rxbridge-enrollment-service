@@ -1,0 +1,1 @@
+ALTER TABLE enrollment ALTER COLUMN other_reason TYPE varchar(2000);
