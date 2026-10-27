@@ -79,6 +79,25 @@ class DomainPreconditionsTest {
     }
 
     @Nested
+    class RequireAbsent {
+
+        @ParameterizedTest
+        @NullAndEmptySource
+        @ValueSource(strings = {"   "})
+        void returnsNullWhenValueIsBlank(String input) {
+            assertThat(requireAbsent(input, "testField")).isNull();
+        }
+
+        @Test
+        void rejectsWhenValueIsNotBlank() {
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> requireAbsent("Test non blank value", "testField"))
+                .withMessageContaining("testField");
+        }
+
+    }
+
+    @Nested
     class OptionalText{
 
         @Test

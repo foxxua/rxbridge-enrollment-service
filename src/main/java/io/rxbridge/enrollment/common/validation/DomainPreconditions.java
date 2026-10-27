@@ -28,6 +28,16 @@ public final class DomainPreconditions {
         return text;
     }
 
+    public static String requireAbsent(String text, String field) {
+        if (text == null || text.isBlank()) {
+            return null;
+        }
+
+        throw new IllegalArgumentException(
+            "%s must be blank".formatted(field)
+        );
+    }
+
     public static String optionalText(String text, String field, int maxLength) {
         if (text == null || text.isBlank()) {
             return null;

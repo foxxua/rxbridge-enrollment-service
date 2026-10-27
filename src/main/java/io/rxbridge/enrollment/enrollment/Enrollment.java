@@ -63,13 +63,13 @@ public class Enrollment extends BaseEntity {
     public void approve(LocalDate startDate) {
         Objects.requireNonNull(startDate, "startDate");
 
-        if (status == EnrollmentStatus.APPROVED && startDate.equals(this.startDate)) {
+        if (this.status == EnrollmentStatus.APPROVED && startDate.equals(this.startDate)) {
             return;
         }
 
-        if (status != EnrollmentStatus.PENDING) {
+        if (this.status != EnrollmentStatus.PENDING) {
             throw new IllegalStateException(
-                CANNOT_APPROVE_TEMPLATE.formatted(status)
+                CANNOT_APPROVE_TEMPLATE.formatted(this.status)
             );
         }
 
@@ -92,13 +92,13 @@ public class Enrollment extends BaseEntity {
     public void complete(LocalDate closeDate, LocalDate today) {
         Objects.requireNonNull(closeDate, "closeDate");
 
-        if (status == EnrollmentStatus.COMPLETED && closeDate.equals(this.closeDate)) {
+        if (this.status == EnrollmentStatus.COMPLETED && closeDate.equals(this.closeDate)) {
             return;
         }
 
-        if (status != EnrollmentStatus.APPROVED) {
+        if (this.status != EnrollmentStatus.APPROVED) {
             throw new IllegalStateException(
-                CANNOT_COMPLETE_TEMPLATE.formatted(status)
+                CANNOT_COMPLETE_TEMPLATE.formatted(this.status)
             );
         }
 
@@ -108,6 +108,44 @@ public class Enrollment extends BaseEntity {
         this.status = EnrollmentStatus.COMPLETED;
         this.closeDate = closeDate;
         this.closeReason = CloseReason.THERAPY_COMPLETED;
+    }
+
+    public void reject(Closure closure, LocalDate closeDate, LocalDate today) {
+        Objects.requireNonNull(closure, "closure");
+        Objects.requireNonNull(closeDate, "closeDate");
+
+        if (this.status == EnrollmentStatus.REJECTED
+            && closure.equals(currentClosure())
+            && closeDate.equals(this.closeDate)
+        ) {
+            return;
+        }
+
+        if (this.status != EnrollmentStatus.PENDING) {
+            throw new IllegalStateException(
+                CANNOT_REJECT_TEMPLATE.formatted(this.status)
+            );
+        }
+
+        if (!closure.closeReason().isAllowedFor(EnrollmentStatus.REJECTED)) {
+            throw new IllegalArgumentException(
+                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(
+                    closure.closeReason(),
+                    EnrollmentStatus.REJECTED
+                )
+            );
+        }
+
+        requireNotFuture(closeDate, today, "closeDate");
+
+        this.status = EnrollmentStatus.REJECTED;
+        this.closeDate = closeDate;
+        this.closeReason = closure.closeReason();
+        this.otherReason = closure.otherReason();
+    }
+
+    private Closure currentClosure() {
+        return new Closure(this.closeReason, this.otherReason);
     }
 
     private static Patient validatePatient(Patient patient) {
