@@ -17,7 +17,9 @@ public class EnrollmentConstants {
     public static final String CANNOT_APPROVE_TEMPLATE = "cannot approve a %s enrollment";
     public static final String CANNOT_COMPLETE_TEMPLATE = "cannot complete a %s enrollment";
     public static final String CANNOT_REJECT_TEMPLATE = "cannot reject a %s enrollment";
+    public static final String CANNOT_CANCEL_TEMPLATE = "cannot cancel a %s enrollment";
     public static final String CLOSE_REASON_NOT_ALLOWED_TEMPLATE = "close reason %s is not allowed for status %s";
+    public static final String CANNOT_CANCEL_ACTIVE_TEMPLATE = "close reason %s but %s %s is active";
 
     private EnrollmentConstants() { }
 

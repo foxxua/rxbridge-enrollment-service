@@ -18,7 +18,7 @@ public final class EnrollmentFixtures {
         CloseReason.NOT_ELIGIBLE,
         null
     );
-    public static final Closure REJECT_CLOSURE_OTHER = new Closure(
+    public static final Closure CLOSURE_OTHER = new Closure(
         CloseReason.OTHER,
         OTHER_REASON
     );
@@ -42,14 +42,6 @@ public final class EnrollmentFixtures {
 
     public static Enrollment anEnrollmentWithInactiveMedication() {
         Enrollment enrollment = anEnrollment();
-        enrollment.getMedication().deactivate();
-
-        return enrollment;
-    }
-
-    public static Enrollment anEnrollmentWithInactiveRelations() {
-        Enrollment enrollment = anEnrollment();
-        enrollment.getPatient().deactivate();
         enrollment.getMedication().deactivate();
 
         return enrollment;
@@ -100,7 +92,21 @@ public final class EnrollmentFixtures {
 
     public static Enrollment aRejectedEnrollmentOtherReason() {
         Enrollment enrollment = anEnrollment();
-        enrollment.reject(REJECT_CLOSURE_OTHER, CLOSE_DATE, TODAY);
+        enrollment.reject(CLOSURE_OTHER, CLOSE_DATE, TODAY);
+
+        return enrollment;
+    }
+
+    public static Enrollment aCancelledEnrollmentFromPending() {
+        Enrollment enrollment = anEnrollment();
+        enrollment.cancel(CLOSURE_OTHER, CLOSE_DATE, TODAY);
+
+        return enrollment;
+    }
+
+    public static Enrollment aCancelledEnrollmentFromApproved() {
+        Enrollment enrollment = anApprovedEnrollment();
+        enrollment.cancel(CLOSURE_OTHER, CLOSE_DATE, TODAY);
 
         return enrollment;
     }

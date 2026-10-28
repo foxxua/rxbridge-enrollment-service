@@ -8,14 +8,11 @@ public enum EnrollmentStatus {
     CANCELLED,
     REJECTED;
 
-    public boolean isStart() {
-        return this == PENDING;
-    }
-
-    public boolean isClose() {
-        return this == COMPLETED
-            || this == CANCELLED
-            || this == REJECTED;
+    public boolean isOpen() {
+        return switch (this) {
+            case PENDING, APPROVED              -> true;
+            case COMPLETED, CANCELLED, REJECTED -> false;
+        };
     }
 
 }

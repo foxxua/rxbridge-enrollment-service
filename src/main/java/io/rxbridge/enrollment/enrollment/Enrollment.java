@@ -144,6 +144,64 @@ public class Enrollment extends BaseEntity {
         this.otherReason = closure.otherReason();
     }
 
+    public void cancel(Closure closure, LocalDate closeDate, LocalDate today) {
+        Objects.requireNonNull(closure, "closure");
+        Objects.requireNonNull(closeDate, "closeDate");
+
+        if (this.status == EnrollmentStatus.CANCELLED
+            && closure.equals(currentClosure())
+            && closeDate.equals(this.closeDate)
+        ) {
+            return;
+        }
+
+        if (!this.status.isOpen()) {
+            throw new IllegalStateException(
+                CANNOT_CANCEL_TEMPLATE.formatted(this.status)
+            );
+        }
+
+        if (!closure.closeReason().isAllowedFor(EnrollmentStatus.CANCELLED)) {
+            throw new IllegalArgumentException(
+                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(
+                    closure.closeReason(),
+                    EnrollmentStatus.CANCELLED
+                )
+            );
+        }
+
+        if (closure.closeReason() == CloseReason.PATIENT_DEACTIVATED && this.patient.isActive()) {
+            throw new IllegalArgumentException(
+                CANNOT_CANCEL_ACTIVE_TEMPLATE.formatted(
+                    closure.closeReason(),
+                    "patient",
+                    this.patient.getId()
+                )
+            );
+        }
+
+        if (closure.closeReason() == CloseReason.MEDICATION_DEACTIVATED && this.medication.isActive()) {
+            throw new IllegalArgumentException(
+                CANNOT_CANCEL_ACTIVE_TEMPLATE.formatted(
+                    closure.closeReason(),
+                    "medication",
+                    this.medication.getId()
+                )
+            );
+        }
+
+        requireNotFuture(closeDate, today, "closeDate");
+
+        if (this.startDate != null) {
+            requireNotBefore(closeDate, this.startDate, "closeDate");
+        }
+
+        this.status = EnrollmentStatus.CANCELLED;
+        this.closeDate = closeDate;
+        this.closeReason = closure.closeReason();
+        this.otherReason = closure.otherReason();
+    }
+
     private Closure currentClosure() {
         return new Closure(this.closeReason, this.otherReason);
     }

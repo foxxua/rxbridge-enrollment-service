@@ -382,7 +382,7 @@ class EnrollmentTest {
 
             assertThatIllegalStateException()
                 .isThrownBy(() -> enrollment.reject(
-                    REJECT_CLOSURE_OTHER,
+                    CLOSURE_OTHER,
                     CLOSE_DATE,
                     TODAY))
                 .withMessageContaining("cannot reject");
@@ -426,14 +426,169 @@ class EnrollmentTest {
             assertThat(enrollment.getOtherReason()).isNull();
         }
 
-        static void assertStillPending(Enrollment enrollment) {
-            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
-            assertThat(enrollment.getStartDate()).isNull();
-            assertThat(enrollment.getCloseDate()).isNull();
-            assertThat(enrollment.getCloseReason()).isNull();
-            assertThat(enrollment.getOtherReason()).isNull();
+    }
+
+    @Nested
+    class Cancel {
+
+        @Test
+        void cancelsPendingEnrollment() {
+            Enrollment enrollment = aCancelledEnrollmentFromPending();
+
+            assertSoftly(softly -> {
+                softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+                softly.assertThat(enrollment.getStartDate()).isNull();
+                softly.assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
+                softly.assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.OTHER);
+                softly.assertThat(enrollment.getOtherReason()).isEqualTo(OTHER_REASON);
+            });
         }
 
+        @Test
+        void cancelsApprovedEnrollment() {
+            Enrollment enrollment = aCancelledEnrollmentFromApproved();
+
+            assertSoftly(softly -> {
+                softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+                softly.assertThat(enrollment.getStartDate()).isEqualTo(START_DATE);
+                softly.assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
+                softly.assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.OTHER);
+                softly.assertThat(enrollment.getOtherReason()).isEqualTo(OTHER_REASON);
+            });
+        }
+
+        @Test
+        void refusesCloseDateBeforeStartDate() {
+            Enrollment enrollment = anApprovedEnrollment();
+
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> enrollment.cancel(
+                    CLOSURE_OTHER,
+                    START_DATE.minusDays(1),
+                    TODAY))
+                .withMessageContaining("closeDate");
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
+            assertThat(enrollment.getCloseDate()).isNull();
+        }
+
+        @Test
+        void refusesCloseDateInFuture() {
+            Enrollment enrollment = anEnrollment();
+
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> enrollment.cancel(
+                    CLOSURE_OTHER,
+                    TODAY.plusDays(1),
+                    TODAY))
+                .withMessageContaining("closeDate");
+            assertStillPending(enrollment);
+        }
+
+        @Test
+        void refusesIncompatibleReason() {
+            Enrollment enrollment = anEnrollment();
+            Closure closure = new Closure(CloseReason.NOT_ELIGIBLE, null);
+
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> enrollment.cancel(
+                    closure,
+                    CLOSE_DATE,
+                    TODAY))
+                .withMessageContaining("is not allowed");
+            assertStillPending(enrollment);
+        }
+
+        @Test
+        void ignoresRepeatedCancelWithSameCloseDate() {
+            Enrollment enrollment = aCancelledEnrollmentFromApproved();
+            enrollment.cancel(
+                CLOSURE_OTHER,
+                CLOSE_DATE,
+                TODAY
+            );
+
+            assertDefaultCancelled(enrollment);
+        }
+
+        @Test
+        void refusesRepeatedCancelWithAnotherReason() {
+            Enrollment enrollment = aCancelledEnrollmentFromPending();
+            Closure closure = new Closure(CloseReason.OTHER, "Another reason");
+
+            assertThatIllegalStateException()
+                .isThrownBy(() -> enrollment.cancel(
+                    closure,
+                    CLOSE_DATE,
+                    TODAY))
+                .withMessageContaining("cannot cancel");
+            assertDefaultCancelled(enrollment);
+        }
+
+        @Test
+        void cancelsForInactivePatient() {
+            Enrollment enrollment = anApprovedEnrollmentWithInactivePatient();
+            Closure closure = new Closure(CloseReason.PATIENT_DEACTIVATED, null);
+            enrollment.cancel(closure, CLOSE_DATE, TODAY);
+
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+            assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.PATIENT_DEACTIVATED);
+        }
+
+        @Test
+        void cancelsForInactiveMedication() {
+            Enrollment enrollment = anApprovedEnrollmentWithInactiveMedication();
+            Closure closure = new Closure(CloseReason.MEDICATION_DEACTIVATED, null);
+            enrollment.cancel(closure, CLOSE_DATE, TODAY);
+
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+            assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.MEDICATION_DEACTIVATED);
+        }
+
+        @Test
+        void refusesPatientDeactivatedForActivePatient() {
+            Enrollment enrollment = anApprovedEnrollment();
+            Closure closure = new Closure(CloseReason.PATIENT_DEACTIVATED, null);
+
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> enrollment.cancel(
+                    closure,
+                    CLOSE_DATE,
+                    TODAY))
+                .withMessageContaining("is active");
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
+            assertThat(enrollment.getCloseDate()).isNull();
+        }
+
+        @Test
+        void refusesMedicationDeactivatedForActiveMedication() {
+            Enrollment enrollment = anApprovedEnrollment();
+            Closure closure = new Closure(CloseReason.MEDICATION_DEACTIVATED, null);
+
+            assertThatIllegalArgumentException()
+                .isThrownBy(() -> enrollment.cancel(
+                    closure,
+                    CLOSE_DATE,
+                    TODAY))
+                .withMessageContaining("is active");
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
+            assertThat(enrollment.getCloseDate()).isNull();
+        }
+
+        static void assertDefaultCancelled(Enrollment enrollment) {
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+            assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.OTHER);
+            assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
+            assertThat(enrollment.getOtherReason()).isEqualTo(OTHER_REASON);
+        }
+
+    }
+
+    static void assertStillPending(Enrollment enrollment) {
+        assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
+        assertThat(enrollment.getStartDate()).isNull();
+        assertThat(enrollment.getCloseDate()).isNull();
+        assertThat(enrollment.getCloseReason()).isNull();
+        assertThat(enrollment.getOtherReason()).isNull();
     }
 
 }
