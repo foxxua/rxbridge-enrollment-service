@@ -111,6 +111,16 @@ public final class EnrollmentFixtures {
         return enrollment;
     }
 
+    public static Enrollment anEnrollmentIn(EnrollmentStatus status) {
+        return switch (status) {
+            case PENDING   -> anEnrollment();
+            case APPROVED  -> anApprovedEnrollment();
+            case COMPLETED -> aCompletedEnrollment();
+            case REJECTED  -> aRejectedEnrollment();
+            case CANCELLED -> aCancelledEnrollmentFromPending();
+        };
+    }
+
     public static final class EnrollmentBuilder {
 
         private Patient patient = aPatient();

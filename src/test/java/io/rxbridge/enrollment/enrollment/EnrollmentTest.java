@@ -2,8 +2,11 @@ package io.rxbridge.enrollment.enrollment;
 
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.time.LocalDate;
+import java.util.function.Consumer;
 
 import static io.rxbridge.enrollment.enrollment.EnrollmentFixtures.*;
 import static org.assertj.core.api.Assertions.*;
@@ -155,16 +158,6 @@ class EnrollmentTest {
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
         }
 
-        @Test
-        void rejectsApproveForCompleted() {
-            Enrollment enrollment = aCompletedEnrollment();
-
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.approve(START_DATE))
-                .withMessageContaining("cannot approve");
-            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.COMPLETED);
-        }
-
     }
 
     @Nested
@@ -307,18 +300,6 @@ class EnrollmentTest {
 
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.COMPLETED);
             assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
-        }
-
-        @Test
-        void rejectsCompleteForPending() {
-            Enrollment enrollment = anEnrollment();
-
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.complete(
-                    CLOSE_DATE,
-                    TODAY))
-                .withMessageContaining("cannot complete");
-            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
         }
 
     }
@@ -579,6 +560,92 @@ class EnrollmentTest {
             assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.OTHER);
             assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
             assertThat(enrollment.getOtherReason()).isEqualTo(OTHER_REASON);
+        }
+
+    }
+
+    @Nested
+    class Transitions {
+
+        enum Transition {
+
+            APPROVE (e -> e.approve(START_DATE)),
+            COMPLETE(e -> e.complete(CLOSE_DATE, TODAY)),
+            REJECT  (e -> e.reject(REJECT_CLOSURE, CLOSE_DATE, TODAY)),
+            CANCEL  (e -> e.cancel(CLOSURE_OTHER, CLOSE_DATE, TODAY));
+
+            private final Consumer<Enrollment> action;
+
+            Transition(Consumer<Enrollment> action) {
+                this.action = action;
+            }
+
+            void applyTo(Enrollment enrollment) {
+                this.action.accept(enrollment);
+            }
+
+        }
+
+        private record Snapshot(
+            EnrollmentStatus status,
+            LocalDate startDate,
+            LocalDate closeDate,
+            CloseReason closeReason,
+            String otherReason
+        ) {
+
+            static Snapshot of(Enrollment enrollment) {
+                return new Snapshot(
+                    enrollment.getStatus(),
+                    enrollment.getStartDate(),
+                    enrollment.getCloseDate(),
+                    enrollment.getCloseReason(),
+                    enrollment.getOtherReason()
+                );
+            }
+
+        }
+
+        @ParameterizedTest(name = "{1} from {0} -> {2}")
+        @CsvSource(delimiter = '|', textBlock = """
+            # given    |  transition  |  outcome #
+            # ---------------------------------- #
+            PENDING    |  APPROVE     |  APPROVED
+            PENDING    |  COMPLETE    |  refused
+            PENDING    |  REJECT      |  REJECTED
+            PENDING    |  CANCEL      |  CANCELLED
+            APPROVED   |  APPROVE     |  APPROVED
+            APPROVED   |  COMPLETE    |  COMPLETED
+            APPROVED   |  REJECT      |  refused
+            APPROVED   |  CANCEL      |  CANCELLED
+            COMPLETED  |  APPROVE     |  refused
+            COMPLETED  |  COMPLETE    |  COMPLETED
+            COMPLETED  |  REJECT      |  refused
+            COMPLETED  |  CANCEL      |  refused
+            REJECTED   |  APPROVE     |  refused
+            REJECTED   |  COMPLETE    |  refused
+            REJECTED   |  REJECT      |  REJECTED
+            REJECTED   |  CANCEL      |  refused
+            CANCELLED  |  APPROVE     |  refused
+            CANCELLED  |  COMPLETE    |  refused
+            CANCELLED  |  REJECT      |  refused
+            CANCELLED  |  CANCEL      |  CANCELLED
+            """)
+        void followsTransitionTable(EnrollmentStatus given, Transition transition, String outcome) {
+            Enrollment enrollment = anEnrollmentIn(given);
+
+            if (outcome.equals("refused")) {
+                Snapshot before = Snapshot.of(enrollment);
+
+                assertThatIllegalStateException()
+                    .isThrownBy(() -> transition.applyTo(enrollment));
+                assertThat(Snapshot.of(enrollment)).isEqualTo(before);
+            } else {
+                transition.applyTo(enrollment);
+
+                assertThat(enrollment.getStatus())
+                    .isEqualTo(EnrollmentStatus.valueOf(outcome));
+            }
         }
 
     }
