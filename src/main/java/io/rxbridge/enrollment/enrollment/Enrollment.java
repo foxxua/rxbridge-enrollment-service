@@ -22,6 +22,8 @@ import static io.rxbridge.enrollment.common.validation.DomainPreconditions.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Enrollment extends BaseEntity {
 
+    private static final Closure THERAPY_COMPLETED_CLOSURE = new Closure(CloseReason.THERAPY_COMPLETED, null);
+
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "patient_id", updatable = false, nullable = false)
@@ -67,11 +69,7 @@ public class Enrollment extends BaseEntity {
             return;
         }
 
-        if (this.status != EnrollmentStatus.PENDING) {
-            throw new IllegalStateException(
-                CANNOT_APPROVE_TEMPLATE.formatted(this.status)
-            );
-        }
+        requireCanMoveTo(EnrollmentStatus.APPROVED, "approve");
 
         if (!this.patient.isActive()) {
             throw new IllegalStateException(
@@ -92,84 +90,72 @@ public class Enrollment extends BaseEntity {
     public void complete(LocalDate closeDate, LocalDate today) {
         Objects.requireNonNull(closeDate, "closeDate");
 
-        if (this.status == EnrollmentStatus.COMPLETED && closeDate.equals(this.closeDate)) {
+        if (isRepeatedClosing(EnrollmentStatus.COMPLETED, THERAPY_COMPLETED_CLOSURE, closeDate)) {
             return;
         }
 
-        if (this.status != EnrollmentStatus.APPROVED) {
-            throw new IllegalStateException(
-                CANNOT_COMPLETE_TEMPLATE.formatted(this.status)
-            );
-        }
-
-        requireNotFuture(closeDate, today, "closeDate");
-        requireNotBefore(closeDate, this.startDate, "closeDate");
-
-        this.status = EnrollmentStatus.COMPLETED;
-        this.closeDate = closeDate;
-        this.closeReason = CloseReason.THERAPY_COMPLETED;
+        requireCanMoveTo(EnrollmentStatus.COMPLETED, "complete");
+        close(EnrollmentStatus.COMPLETED, THERAPY_COMPLETED_CLOSURE, closeDate, today);
     }
 
     public void reject(Closure closure, LocalDate closeDate, LocalDate today) {
         Objects.requireNonNull(closure, "closure");
         Objects.requireNonNull(closeDate, "closeDate");
 
-        if (this.status == EnrollmentStatus.REJECTED
-            && closure.equals(currentClosure())
-            && closeDate.equals(this.closeDate)
-        ) {
+        if (isRepeatedClosing(EnrollmentStatus.REJECTED, closure, closeDate)) {
             return;
         }
 
-        if (this.status != EnrollmentStatus.PENDING) {
-            throw new IllegalStateException(
-                CANNOT_REJECT_TEMPLATE.formatted(this.status)
-            );
-        }
-
-        if (!closure.closeReason().isAllowedFor(EnrollmentStatus.REJECTED)) {
-            throw new IllegalArgumentException(
-                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(
-                    closure.closeReason(),
-                    EnrollmentStatus.REJECTED
-                )
-            );
-        }
-
-        requireNotFuture(closeDate, today, "closeDate");
-
-        this.status = EnrollmentStatus.REJECTED;
-        this.closeDate = closeDate;
-        this.closeReason = closure.closeReason();
-        this.otherReason = closure.otherReason();
+        requireCanMoveTo(EnrollmentStatus.REJECTED, "reject");
+        close(EnrollmentStatus.REJECTED, closure, closeDate, today);
     }
 
     public void cancel(Closure closure, LocalDate closeDate, LocalDate today) {
         Objects.requireNonNull(closure, "closure");
         Objects.requireNonNull(closeDate, "closeDate");
 
-        if (this.status == EnrollmentStatus.CANCELLED
-            && closure.equals(currentClosure())
-            && closeDate.equals(this.closeDate)
-        ) {
+        if (isRepeatedClosing(EnrollmentStatus.CANCELLED, closure, closeDate)) {
             return;
         }
 
-        if (!this.status.isOpen()) {
+        requireCanMoveTo(EnrollmentStatus.CANCELLED, "cancel");
+        requireReasonIsTrue(closure);
+        close(EnrollmentStatus.CANCELLED, closure, closeDate, today);
+    }
+
+    private void requireCanMoveTo(EnrollmentStatus target, String action) {
+        if (!this.status.canMoveTo(target)) {
             throw new IllegalStateException(
-                CANNOT_CANCEL_TEMPLATE.formatted(this.status)
+                CANNOT_MOVE_TEMPLATE.formatted(action, this.status)
             );
         }
+    }
 
-        if (!closure.closeReason().isAllowedFor(EnrollmentStatus.CANCELLED)) {
+    private boolean isRepeatedClosing(EnrollmentStatus target, Closure closure, LocalDate closeDate) {
+        return this.status == target
+            && closure.equals(currentClosure())
+            && closeDate.equals(this.closeDate);
+    }
+
+    private void close(EnrollmentStatus target, Closure closure, LocalDate closeDate, LocalDate today) {
+        if (!closure.closeReason().isAllowedFor(target)) {
             throw new IllegalArgumentException(
-                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(
-                    closure.closeReason(),
-                    EnrollmentStatus.CANCELLED
-                )
+                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(closure.closeReason(), target)
             );
         }
 
+        requireNotFuture(closeDate, today, "closeDate");
+        if (this.startDate != null) {
+            requireNotBefore(closeDate, this.startDate, "closeDate");
+        }
+
+        this.status = target;
+        this.closeDate = closeDate;
+        this.closeReason = closure.closeReason();
+        this.otherReason = closure.otherReason();
+    }
+
+    private void requireReasonIsTrue(Closure closure) {
         if (closure.closeReason() == CloseReason.PATIENT_DEACTIVATED && this.patient.isActive()) {
             throw new IllegalArgumentException(
                 CANNOT_CANCEL_ACTIVE_TEMPLATE.formatted(
@@ -189,17 +175,6 @@ public class Enrollment extends BaseEntity {
                 )
             );
         }
-
-        requireNotFuture(closeDate, today, "closeDate");
-
-        if (this.startDate != null) {
-            requireNotBefore(closeDate, this.startDate, "closeDate");
-        }
-
-        this.status = EnrollmentStatus.CANCELLED;
-        this.closeDate = closeDate;
-        this.closeReason = closure.closeReason();
-        this.otherReason = closure.otherReason();
     }
 
     private Closure currentClosure() {

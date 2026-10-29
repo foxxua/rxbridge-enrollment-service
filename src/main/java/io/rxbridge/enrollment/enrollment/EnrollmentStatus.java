@@ -15,4 +15,12 @@ public enum EnrollmentStatus {
         };
     }
 
+    public boolean canMoveTo(EnrollmentStatus target) {
+        return switch (this) {
+            case PENDING                         -> target == APPROVED || target == CANCELLED || target == REJECTED;
+            case APPROVED                        -> target == CANCELLED || target == COMPLETED;
+            case COMPLETED, CANCELLED, REJECTED  -> false;
+        };
+    }
+
 }
