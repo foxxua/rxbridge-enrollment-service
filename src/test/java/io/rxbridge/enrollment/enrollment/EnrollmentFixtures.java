@@ -111,6 +111,28 @@ public final class EnrollmentFixtures {
         return enrollment;
     }
 
+    public static Enrollment aCancelledEnrollmentBecausePatientDeactivated() {
+        Enrollment enrollment = anApprovedEnrollmentWithInactivePatient();
+        enrollment.cancel(
+            new Closure(CloseReason.PATIENT_DEACTIVATED, null),
+            TODAY,
+            TODAY
+        );
+
+        return enrollment;
+    }
+
+    public static Enrollment aCancelledEnrollmentBecauseMedicationDeactivated() {
+        Enrollment enrollment = anApprovedEnrollmentWithInactiveMedication();
+        enrollment.cancel(
+            new Closure(CloseReason.MEDICATION_DEACTIVATED, null),
+            TODAY,
+            TODAY
+        );
+
+        return enrollment;
+    }
+
     public static Enrollment anEnrollmentIn(EnrollmentStatus status) {
         return switch (status) {
             case PENDING   -> anEnrollment();
