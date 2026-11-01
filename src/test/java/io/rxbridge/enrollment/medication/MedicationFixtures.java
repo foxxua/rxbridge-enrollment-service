@@ -1,8 +1,12 @@
 package io.rxbridge.enrollment.medication;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import static io.rxbridge.enrollment.medication.MedicationConstants.*;
 
 public final class MedicationFixtures {
+
+    private static final AtomicInteger NEXT_CODE = new AtomicInteger(900_000);
 
     private static final String DEFAULT_NAME         = "Aspirin";
     private static final String DEFAULT_DESCRIPTION  = "A nonsteroidal anti-inflammatory drug " +
@@ -76,6 +80,16 @@ public final class MedicationFixtures {
             .description(null)
             .sideEffects(null)
             .build();
+    }
+
+    public static Medication aMedicationWithUniqueCode() {
+        return aMedicationBuilder()
+            .code(aUniqueMedicationCode())
+            .build();
+    }
+
+    public static String aUniqueMedicationCode() {
+        return "M%06d".formatted(NEXT_CODE.getAndIncrement());
     }
 
     public static String aMedicationName() {
