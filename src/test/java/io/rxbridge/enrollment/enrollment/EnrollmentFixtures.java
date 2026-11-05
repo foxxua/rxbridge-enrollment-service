@@ -49,7 +49,7 @@ public final class EnrollmentFixtures {
 
     public static Enrollment anApprovedEnrollment() {
         Enrollment enrollment = anEnrollment();
-        enrollment.approve(START_DATE);
+        enrollment.approve(START_DATE, TODAY);
 
         return enrollment;
     }

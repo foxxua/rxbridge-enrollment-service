@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.common.validation;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -50,9 +51,9 @@ class DomainPreconditionsTest {
         @EmptySource
         @ValueSource(strings = {" ", "\t", " \n "})
         void rejectsMissingText(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireText(input, "testField", MAX))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireText(input, "testField", MAX))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
         @Test
@@ -63,10 +64,10 @@ class DomainPreconditionsTest {
 
         @Test
         void rejectsMoreThanMaxLength() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireText("a".repeat(MAX + 1), "testField", MAX))
-                .withMessageContaining("testField")
-                .withMessageContaining(String.valueOf(MAX));
+            assertThatThrownBy(() -> requireText("a".repeat(MAX + 1), "testField", MAX))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField")
+                .hasMessageContaining(String.valueOf(MAX));
         }
 
         @Test
@@ -90,9 +91,9 @@ class DomainPreconditionsTest {
 
         @Test
         void rejectsWhenValueIsNotBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireAbsent("Test non blank value", "testField"))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireAbsent("Test non blank value", "testField"))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
     }
@@ -120,10 +121,10 @@ class DomainPreconditionsTest {
 
         @Test
         void rejectsMoreThanMaxLength() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> optionalText("a".repeat(MAX + 1), "testField", MAX))
-                .withMessageContaining("testField")
-                .withMessageContaining(String.valueOf(MAX));
+            assertThatThrownBy(() -> optionalText("a".repeat(MAX + 1), "testField", MAX))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField")
+                .hasMessageContaining(String.valueOf(MAX));
         }
 
         @Test
@@ -154,9 +155,9 @@ class DomainPreconditionsTest {
         @EmptySource
         @ValueSource(strings = {"  ", "\t", "\n", " \t \n "})
         void rejectsWhitespaceOnly(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireMatch(input, "testField", TEXT_PATTERN))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireMatch(input, "testField", TEXT_PATTERN))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
         @ParameterizedTest
@@ -164,9 +165,9 @@ class DomainPreconditionsTest {
             "te", "T", "TES", "T1", " TE", "щя"
         })
         void rejectsNonMatchingValues(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireMatch(input, "testField", TEXT_PATTERN))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireMatch(input, "testField", TEXT_PATTERN))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
     }
@@ -197,9 +198,9 @@ class DomainPreconditionsTest {
 
         @Test
         void rejectsTomorrow() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireNotFuture(TOMORROW, TODAY, "testField"))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireNotFuture(TOMORROW, TODAY, "testField"))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
         static Stream<LocalDate> todayAndPastDates() {
@@ -237,9 +238,9 @@ class DomainPreconditionsTest {
 
         @Test
         void rejectsYesterday() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> requireNotBefore(YESTERDAY, TODAY, "testField"))
-                .withMessageContaining("testField");
+            assertThatThrownBy(() -> requireNotBefore(YESTERDAY, TODAY, "testField"))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("testField");
         }
 
         static Stream<LocalDate> boundAndLaterDates() {

@@ -1,5 +1,8 @@
 package io.rxbridge.enrollment.enrollment;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
+import io.rxbridge.enrollment.medication.MedicationNotActiveException;
+import io.rxbridge.enrollment.patient.PatientNotActiveException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,11 +48,12 @@ class EnrollmentTest {
 
         @Test
         void rejectsInactivePatient() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> anEnrollmentBuilder()
+            assertThatThrownBy(() -> anEnrollmentBuilder()
                     .patient(anInactivePatient())
                     .build())
-                .withMessageContaining("patient");
+                .isInstanceOf(PatientNotActiveException.class)
+                .hasMessageContaining("Patient")
+                .hasMessageContaining("not active");
         }
 
         @Test
@@ -63,11 +67,12 @@ class EnrollmentTest {
 
         @Test
         void rejectsInactiveMedication() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> anEnrollmentBuilder()
+            assertThatThrownBy(() -> anEnrollmentBuilder()
                     .medication(anInactiveMedication())
                     .build())
-                .withMessageContaining("medication");
+                .isInstanceOf(MedicationNotActiveException.class)
+                .hasMessageContaining("Medication")
+                .hasMessageContaining("not active");
         }
 
     }
@@ -80,7 +85,7 @@ class EnrollmentTest {
             final LocalDate startDate = LocalDate.of(2026, 9, 25);
 
             Enrollment enrollment = anEnrollment();
-            enrollment.approve(startDate);
+            enrollment.approve(startDate, TODAY);
 
             assertSoftly(softly -> {
                 softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
@@ -96,7 +101,7 @@ class EnrollmentTest {
             final LocalDate pastStartDate = LocalDate.of(2025, 9, 25);
 
             Enrollment enrollment = anEnrollment();
-            enrollment.approve(pastStartDate);
+            enrollment.approve(pastStartDate, TODAY);
 
             assertSoftly(softly -> {
                 softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
@@ -105,11 +110,44 @@ class EnrollmentTest {
         }
 
         @Test
+        void approvesWithStartDateEqualsToday() {
+            Enrollment enrollment = anEnrollment();
+            enrollment.approve(TODAY, TODAY);
+
+            assertSoftly(softly -> {
+                softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
+                softly.assertThat(enrollment.getStartDate()).isEqualTo(TODAY);
+            });
+        }
+
+        @Test
+        void rejectsStartDateInFuture() {
+            Enrollment enrollment = anEnrollment();
+
+            assertThatThrownBy(() -> enrollment.approve(TODAY.plusDays(1), TODAY))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("startDate");
+            assertStillPending(enrollment);
+        }
+
+        @Test
         void ignoresRepeatedApproveWithSameStartDate() {
             Enrollment enrollment = anApprovedEnrollment();
 
-            enrollment.approve(START_DATE);
+            enrollment.approve(START_DATE, TODAY);
 
+            assertSoftly(softly -> {
+                softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
+                softly.assertThat(enrollment.getStartDate()).isEqualTo(START_DATE);
+            });
+        }
+
+        @Test
+        void ignoresRepeatedApproveWithSameStartDateAndAnotherToday() {
+            Enrollment enrollment = anApprovedEnrollment();
+
+            assertThatCode(() -> enrollment.approve(START_DATE, START_DATE.minusDays(1)))
+                .doesNotThrowAnyException();
             assertSoftly(softly -> {
                 softly.assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
                 softly.assertThat(enrollment.getStartDate()).isEqualTo(START_DATE);
@@ -120,9 +158,9 @@ class EnrollmentTest {
         void rejectsAnotherStartDate() {
             Enrollment enrollment = anApprovedEnrollment();
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.approve(START_DATE.plusDays(1)))
-                .withMessageContaining("cannot approve");
+            assertThatThrownBy(() -> enrollment.approve(START_DATE.plusDays(1), TODAY))
+                .isInstanceOf(InvalidEnrollmentTransitionException.class)
+                .hasMessageContaining("Cannot approve");
             assertThat(enrollment.getStartDate()).isEqualTo(START_DATE);
         }
 
@@ -131,7 +169,7 @@ class EnrollmentTest {
             Enrollment enrollment = anEnrollment();
 
             assertThatNullPointerException()
-                .isThrownBy(() -> enrollment.approve(null))
+                .isThrownBy(() -> enrollment.approve(null, TODAY))
                 .withMessageContaining("startDate");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
         }
@@ -141,9 +179,10 @@ class EnrollmentTest {
             Enrollment enrollment = anEnrollment();
             enrollment.getPatient().deactivate();
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.approve(START_DATE))
-                .withMessageContaining("patient");
+            assertThatThrownBy(() -> enrollment.approve(START_DATE, TODAY))
+                .isInstanceOf(PatientNotActiveException.class)
+                .hasMessageContaining("Patient")
+                .hasMessageContaining("not active");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
         }
 
@@ -152,9 +191,10 @@ class EnrollmentTest {
             Enrollment enrollment = anEnrollment();
             enrollment.getMedication().deactivate();
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.approve(START_DATE))
-                .withMessageContaining("medication");
+            assertThatThrownBy(() -> enrollment.approve(START_DATE, TODAY))
+                .isInstanceOf(MedicationNotActiveException.class)
+                .hasMessageContaining("Medication")
+                .hasMessageContaining("not active");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.PENDING);
         }
 
@@ -213,11 +253,11 @@ class EnrollmentTest {
         void rejectsCloseDateBeforeStartDate() {
             Enrollment enrollment = anApprovedEnrollment();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.complete(
+            assertThatThrownBy(() -> enrollment.complete(
                     START_DATE.minusDays(1),
                     TODAY))
-                .withMessageContaining("closeDate");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("closeDate");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
             assertThat(enrollment.getCloseDate()).isNull();
         }
@@ -226,11 +266,11 @@ class EnrollmentTest {
         void rejectsCloseDateInFuture() {
             Enrollment enrollment = anApprovedEnrollment();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.complete(
-                    TODAY.plusDays(1),
+            assertThatThrownBy(() -> enrollment.complete(
+                    TOMORROW,
                     TODAY))
-                .withMessageContaining("closeDate");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("closeDate");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
             assertThat(enrollment.getCloseDate()).isNull();
         }
@@ -263,11 +303,11 @@ class EnrollmentTest {
 
             Enrollment enrollment = aCompletedEnrollment();
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.complete(
+            assertThatThrownBy(() -> enrollment.complete(
                     anotherCloseDate,
                     TODAY))
-                .withMessageContaining("cannot complete");
+                .isInstanceOf(InvalidEnrollmentTransitionException.class)
+                .hasMessageContaining("Cannot complete");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.COMPLETED);
             assertThat(enrollment.getCloseDate()).isEqualTo(CLOSE_DATE);
         }
@@ -336,12 +376,12 @@ class EnrollmentTest {
             Enrollment enrollment = anEnrollment();
             Closure closure = new Closure(CloseReason.THERAPY_COMPLETED, null);
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.reject(
+            assertThatThrownBy(() -> enrollment.reject(
                     closure,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("is not allowed");
+                .isInstanceOf(CloseReasonNotAllowedException.class)
+                .hasMessageContaining("is not allowed");
             assertStillPending(enrollment);
         }
 
@@ -361,12 +401,12 @@ class EnrollmentTest {
         void refusesRepeatedRejectWithAnotherReason() {
             Enrollment enrollment = aRejectedEnrollment();
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.reject(
+            assertThatThrownBy(() -> enrollment.reject(
                     CLOSURE_OTHER,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("cannot reject");
+                .isInstanceOf(InvalidEnrollmentTransitionException.class)
+                .hasMessageContaining("Cannot reject");
             assertDefaultRejected(enrollment);
         }
 
@@ -374,13 +414,13 @@ class EnrollmentTest {
         void refusesCloseDateInFuture() {
             Enrollment enrollment = anEnrollment();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.reject(
+            assertThatThrownBy(() -> enrollment.reject(
                     REJECT_CLOSURE,
-                    TODAY.plusDays(1),
+                    TOMORROW,
                     TODAY))
-                .withMessageContaining("closeDate")
-                .withMessageContaining("future");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("closeDate")
+                .hasMessageContaining("future");
             assertStillPending(enrollment);
         }
 
@@ -439,15 +479,29 @@ class EnrollmentTest {
         }
 
         @Test
+        void approvesAndCancelsInSameDate() {
+            Enrollment enrollment = anEnrollment();
+
+            assertThatCode(() -> {
+                    enrollment.approve(TODAY, TODAY);
+                    enrollment.cancel(CLOSURE_OTHER, TODAY, TODAY);
+            }).doesNotThrowAnyException();
+            assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.CANCELLED);
+            assertThat(enrollment.getCloseReason()).isEqualTo(CloseReason.OTHER);
+            assertThat(enrollment.getCloseDate()).isEqualTo(TODAY);
+            assertThat(enrollment.getOtherReason()).isEqualTo(OTHER_REASON);
+        }
+
+        @Test
         void refusesCloseDateBeforeStartDate() {
             Enrollment enrollment = anApprovedEnrollment();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     CLOSURE_OTHER,
                     START_DATE.minusDays(1),
                     TODAY))
-                .withMessageContaining("closeDate");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("closeDate");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
             assertThat(enrollment.getCloseDate()).isNull();
         }
@@ -456,12 +510,12 @@ class EnrollmentTest {
         void refusesCloseDateInFuture() {
             Enrollment enrollment = anEnrollment();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     CLOSURE_OTHER,
-                    TODAY.plusDays(1),
+                    TOMORROW,
                     TODAY))
-                .withMessageContaining("closeDate");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("closeDate");
             assertStillPending(enrollment);
         }
 
@@ -470,12 +524,12 @@ class EnrollmentTest {
             Enrollment enrollment = anEnrollment();
             Closure closure = new Closure(CloseReason.NOT_ELIGIBLE, null);
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     closure,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("is not allowed");
+                .isInstanceOf(CloseReasonNotAllowedException.class)
+                .hasMessageContaining("is not allowed");
             assertStillPending(enrollment);
         }
 
@@ -496,12 +550,12 @@ class EnrollmentTest {
             Enrollment enrollment = aCancelledEnrollmentFromPending();
             Closure closure = new Closure(CloseReason.OTHER, "Another reason");
 
-            assertThatIllegalStateException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     closure,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("cannot cancel");
+                .isInstanceOf(InvalidEnrollmentTransitionException.class)
+                .hasMessageContaining("Cannot cancel");
             assertDefaultCancelled(enrollment);
         }
 
@@ -530,12 +584,12 @@ class EnrollmentTest {
             Enrollment enrollment = anApprovedEnrollment();
             Closure closure = new Closure(CloseReason.PATIENT_DEACTIVATED, null);
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     closure,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("is active");
+                .isInstanceOf(CloseReasonMismatchException.class)
+                .hasMessageContaining("is active");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
             assertThat(enrollment.getCloseDate()).isNull();
         }
@@ -545,12 +599,12 @@ class EnrollmentTest {
             Enrollment enrollment = anApprovedEnrollment();
             Closure closure = new Closure(CloseReason.MEDICATION_DEACTIVATED, null);
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> enrollment.cancel(
+            assertThatThrownBy(() -> enrollment.cancel(
                     closure,
                     CLOSE_DATE,
                     TODAY))
-                .withMessageContaining("is active");
+                .isInstanceOf(CloseReasonMismatchException.class)
+                .hasMessageContaining("is active");
             assertThat(enrollment.getStatus()).isEqualTo(EnrollmentStatus.APPROVED);
             assertThat(enrollment.getCloseDate()).isNull();
         }
@@ -569,7 +623,7 @@ class EnrollmentTest {
 
         enum Transition {
 
-            APPROVE (e -> e.approve(START_DATE)),
+            APPROVE (e -> e.approve(START_DATE, TODAY)),
             COMPLETE(e -> e.complete(CLOSE_DATE, TODAY)),
             REJECT  (e -> e.reject(REJECT_CLOSURE, CLOSE_DATE, TODAY)),
             CANCEL  (e -> e.cancel(CLOSURE_OTHER, CLOSE_DATE, TODAY));
@@ -637,8 +691,8 @@ class EnrollmentTest {
             if (outcome.equals("refused")) {
                 Snapshot before = Snapshot.of(enrollment);
 
-                assertThatIllegalStateException()
-                    .isThrownBy(() -> transition.applyTo(enrollment));
+                assertThatThrownBy(() -> transition.applyTo(enrollment))
+                    .isInstanceOf(InvalidEnrollmentTransitionException.class);
                 assertThat(Snapshot.of(enrollment)).isEqualTo(before);
             } else {
                 transition.applyTo(enrollment);

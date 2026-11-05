@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.patient;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -84,14 +85,14 @@ class AddressTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     "a".repeat(STREET_MAX_LENGTH + 1),
                     CITY,
                     COUNTRY,
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("street");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("street");
         }
 
         @Test
@@ -108,14 +109,14 @@ class AddressTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     "   ",
                     CITY,
                     COUNTRY,
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("street");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("street");
         }
 
     }
@@ -125,14 +126,14 @@ class AddressTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     "a".repeat(CITY_MAX_LENGTH + 1),
                     COUNTRY,
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("city");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("city");
         }
 
         @Test
@@ -149,14 +150,14 @@ class AddressTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     "   ",
                     COUNTRY,
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("city");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("city");
         }
 
     }
@@ -184,26 +185,26 @@ class AddressTest {
         @ParameterizedTest
         @ValueSource(strings = {"фр", "A1", "F"})
         void rejectsInvalidCode(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     input,
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("country");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("country");
         }
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     "a".repeat(COUNTRY_MAX_LENGTH + 1),
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("country");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("country");
         }
 
         @Test
@@ -220,14 +221,14 @@ class AddressTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     "  ",
                     REGION,
                     ZIPCODE))
-                .withMessageContaining("country");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("country");
         }
 
     }
@@ -237,14 +238,14 @@ class AddressTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     COUNTRY,
                     "a".repeat(REGION_MAX_LENGTH + 1),
                     ZIPCODE))
-                .withMessageContaining("region");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("region");
         }
 
         @Test
@@ -276,14 +277,14 @@ class AddressTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     COUNTRY,
                     REGION,
                     "a".repeat(ZIPCODE_MAX_LENGTH + 1)))
-                .withMessageContaining("zipcode");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("zipcode");
         }
 
         @Test
@@ -300,14 +301,14 @@ class AddressTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new Address(
+            assertThatThrownBy(() -> new Address(
                     STREET,
                     CITY,
                     COUNTRY,
                     REGION,
                     "   "))
-                .withMessageContaining("zipcode");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("zipcode");
         }
 
     }

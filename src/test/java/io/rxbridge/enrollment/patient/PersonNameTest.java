@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.patient;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -54,11 +55,11 @@ class PersonNameTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new PersonName(
+            assertThatThrownBy(() -> new PersonName(
                     "a".repeat(NAME_MAX_LENGTH + 1),
                     LAST_NAME))
-                .withMessageContaining("firstName");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("firstName");
         }
 
         @Test
@@ -70,9 +71,9 @@ class PersonNameTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new PersonName("   ", LAST_NAME))
-                .withMessageContaining("firstName");
+            assertThatThrownBy(() -> new PersonName("   ", LAST_NAME))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("firstName");
         }
 
     }
@@ -82,11 +83,11 @@ class PersonNameTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new PersonName(
+            assertThatThrownBy(() -> new PersonName(
                     FIRST_NAME,
                     "a".repeat(NAME_MAX_LENGTH + 1)))
-                .withMessageContaining("lastName");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("lastName");
         }
 
         @Test
@@ -98,9 +99,9 @@ class PersonNameTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> new PersonName(FIRST_NAME, "   "))
-                .withMessageContaining("lastName");
+            assertThatThrownBy(() -> new PersonName(FIRST_NAME, "   "))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("lastName");
         }
 
     }

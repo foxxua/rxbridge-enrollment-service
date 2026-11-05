@@ -2,7 +2,9 @@ package io.rxbridge.enrollment.enrollment;
 
 import io.rxbridge.enrollment.common.persistence.BaseEntity;
 import io.rxbridge.enrollment.medication.Medication;
+import io.rxbridge.enrollment.medication.MedicationNotActiveException;
 import io.rxbridge.enrollment.patient.Patient;
+import io.rxbridge.enrollment.patient.PatientNotActiveException;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -62,7 +64,7 @@ public class Enrollment extends BaseEntity {
         this.status = EnrollmentStatus.PENDING;
     }
 
-    public void approve(LocalDate startDate) {
+    public void approve(LocalDate startDate, LocalDate today) {
         Objects.requireNonNull(startDate, "startDate");
 
         if (this.status == EnrollmentStatus.APPROVED && startDate.equals(this.startDate)) {
@@ -70,18 +72,9 @@ public class Enrollment extends BaseEntity {
         }
 
         requireCanMoveTo(EnrollmentStatus.APPROVED, "approve");
-
-        if (!this.patient.isActive()) {
-            throw new IllegalStateException(
-                PATIENT_NOT_ACTIVE_TEMPLATE.formatted(patient.getId())
-            );
-        }
-
-        if (!this.medication.isActive()) {
-            throw new IllegalStateException(
-                MEDICATION_NOT_ACTIVE_TEMPLATE.formatted(medication.getId())
-            );
-        }
+        requireActive(this.patient);
+        requireActive(this.medication);
+        requireNotFuture(startDate, today, "startDate");
 
         this.status = EnrollmentStatus.APPROVED;
         this.startDate = startDate;
@@ -125,9 +118,7 @@ public class Enrollment extends BaseEntity {
 
     private void requireCanMoveTo(EnrollmentStatus target, String action) {
         if (!this.status.canMoveTo(target)) {
-            throw new IllegalStateException(
-                CANNOT_MOVE_TEMPLATE.formatted(action, this.status)
-            );
+            throw new InvalidEnrollmentTransitionException(action, this.status);
         }
     }
 
@@ -139,8 +130,9 @@ public class Enrollment extends BaseEntity {
 
     private void close(EnrollmentStatus target, Closure closure, LocalDate closeDate, LocalDate today) {
         if (!closure.closeReason().isAllowedFor(target)) {
-            throw new IllegalArgumentException(
-                CLOSE_REASON_NOT_ALLOWED_TEMPLATE.formatted(closure.closeReason(), target)
+            throw new CloseReasonNotAllowedException(
+                closure.closeReason(),
+                target
             );
         }
 
@@ -157,22 +149,18 @@ public class Enrollment extends BaseEntity {
 
     private void requireReasonIsTrue(Closure closure) {
         if (closure.closeReason() == CloseReason.PATIENT_DEACTIVATED && this.patient.isActive()) {
-            throw new IllegalArgumentException(
-                CANNOT_CANCEL_ACTIVE_TEMPLATE.formatted(
-                    closure.closeReason(),
-                    "patient",
-                    this.patient.getId()
-                )
+            throw new CloseReasonMismatchException(
+                closure.closeReason(),
+                "patient",
+                this.patient.getId()
             );
         }
 
         if (closure.closeReason() == CloseReason.MEDICATION_DEACTIVATED && this.medication.isActive()) {
-            throw new IllegalArgumentException(
-                CANNOT_CANCEL_ACTIVE_TEMPLATE.formatted(
-                    closure.closeReason(),
-                    "medication",
-                    this.medication.getId()
-                )
+            throw new CloseReasonMismatchException(
+                closure.closeReason(),
+                "medication",
+                this.medication.getId()
             );
         }
     }
@@ -181,26 +169,28 @@ public class Enrollment extends BaseEntity {
         return new Closure(this.closeReason, this.otherReason);
     }
 
+    private static void requireActive(Patient patient) {
+        if (!patient.isActive()) {
+            throw new PatientNotActiveException(patient.getId());
+        }
+    }
+
+    private static void requireActive(Medication medication) {
+        if (!medication.isActive()) {
+            throw new MedicationNotActiveException(medication.getId());
+        }
+    }
+
     private static Patient validatePatient(Patient patient) {
         Objects.requireNonNull(patient, "patient");
-
-        if (!patient.isActive()) {
-            throw new IllegalArgumentException(
-                PATIENT_NOT_ACTIVE_TEMPLATE.formatted(patient.getId())
-            );
-        }
+        requireActive(patient);
 
         return patient;
     }
 
     private static Medication validateMedication(Medication medication) {
         Objects.requireNonNull(medication, "medication");
-
-        if (!medication.isActive()) {
-            throw new IllegalArgumentException(
-                MEDICATION_NOT_ACTIVE_TEMPLATE.formatted(medication.getId())
-            );
-        }
+        requireActive(medication);
 
         return medication;
     }

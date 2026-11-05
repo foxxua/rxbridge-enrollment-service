@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.medication;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -81,20 +82,20 @@ class MedicationTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .name("   ")
                     .build())
-                .withMessageContaining("name");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("name");
         }
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .name("a".repeat(NAME_MAX_LENGTH + 1))
                     .build())
-                .withMessageContaining("name");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("name");
         }
 
         @Test
@@ -119,9 +120,9 @@ class MedicationTest {
             Medication medication = aMedication();
             String nameBefore = medication.getName();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> medication.rename("   "))
-                .withMessageContaining("name");
+            assertThatThrownBy(() -> medication.rename("   "))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("name");
             assertThat(medication.getName()).isEqualTo(nameBefore);
         }
 
@@ -130,9 +131,9 @@ class MedicationTest {
             Medication medication = aMedication();
             String nameBefore = medication.getName();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> medication.rename("a".repeat(NAME_MAX_LENGTH + 1)))
-                .withMessageContaining("name");
+            assertThatThrownBy(() -> medication.rename("a".repeat(NAME_MAX_LENGTH + 1)))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("name");
             assertThat(medication.getName()).isEqualTo(nameBefore);
         }
 
@@ -143,29 +144,29 @@ class MedicationTest {
 
         @Test
         void rejectsBlank() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .code("   ")
                     .build())
-                .withMessageContaining("code");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("code");
         }
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .code("M1234567")
                     .build())
-                .withMessageContaining("code");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("code");
         }
 
         @Test
         void rejectsTooShort() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .code("M12345")
                     .build())
-                .withMessageContaining("code");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("code");
         }
 
         @ParameterizedTest
@@ -184,11 +185,11 @@ class MedicationTest {
             "1111111", "MMMMMMM", "1MMMMMM", "A123456"
         })
         void rejectsInvalid(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .code(input)
                     .build())
-                .withMessageContaining("code");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("code");
         }
 
     }
@@ -206,11 +207,11 @@ class MedicationTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .description("a".repeat(DESCRIPTION_MAX_LENGTH + 1))
                     .build())
-                .withMessageContaining("description");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("description");
         }
 
         @Test
@@ -245,9 +246,9 @@ class MedicationTest {
             Medication medication = aMedication();
             String oldDescription = medication.getDescription();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> medication.changeDescription("a".repeat(DESCRIPTION_MAX_LENGTH + 1)))
-                .withMessageContaining("description");
+            assertThatThrownBy(() -> medication.changeDescription("a".repeat(DESCRIPTION_MAX_LENGTH + 1)))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("description");
             assertThat(medication.getDescription()).isEqualTo(oldDescription);
         }
 
@@ -266,11 +267,11 @@ class MedicationTest {
 
         @Test
         void rejectsTooLong() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aMedicationBuilder()
+            assertThatThrownBy(() -> aMedicationBuilder()
                     .sideEffects("a".repeat(SIDE_EFFECTS_MAX_LENGTH + 1))
                     .build())
-                .withMessageContaining("sideEffects");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("sideEffects");
         }
 
         @Test
@@ -309,9 +310,9 @@ class MedicationTest {
             Medication medication = aMedication();
             String oldSideEffects = medication.getSideEffects();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> medication.changeSideEffects("a".repeat(SIDE_EFFECTS_MAX_LENGTH + 1)))
-                .withMessageContaining("sideEffects");
+            assertThatThrownBy(() -> medication.changeSideEffects("a".repeat(SIDE_EFFECTS_MAX_LENGTH + 1)))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("sideEffects");
             assertThat(medication.getSideEffects()).isEqualTo(oldSideEffects);
         }
 

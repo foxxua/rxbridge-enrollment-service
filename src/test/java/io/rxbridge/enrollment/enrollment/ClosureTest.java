@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.enrollment;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
@@ -57,11 +58,11 @@ class ClosureTest {
 
     @Test
     void rejectsNonOtherWithText() {
-        assertThatIllegalArgumentException()
-            .isThrownBy(() -> new Closure(
+        assertThatThrownBy(() -> new Closure(
                 CloseReason.PATIENT_DEACTIVATED,
                 OTHER_REASON))
-            .withMessageContaining("otherReason");
+            .isInstanceOf(DomainValidationException.class)
+            .hasMessageContaining("otherReason");
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
 import java.time.LocalDate;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -149,6 +150,40 @@ class EnrollmentRepositoryTest {
             .allSatisfy(e -> assertThat(Hibernate.isInitialized(e.getMedication())).isTrue());
     }
 
+    @ParameterizedTest(name = "{0}")
+    @EnumSource(EnrollmentStatus.class)
+    void findsEnrollmentOnlyInOpenStatus(EnrollmentStatus status) {
+        Enrollment enrollment = persistWithParents(anEnrollmentIn(status));
+        flushAndClear();
+
+        List<Enrollment> found = repository.findOpenByPatientId(enrollment.getPatient().getId());
+
+        assertThat(found).extracting(Enrollment::getId)
+            .isEqualTo(
+                status.isOpen()
+                    ? List.of(enrollment.getId())
+                    : List.of()
+            );
+    }
+
+    @Test
+    void ignoresEnrollmentOfOtherPatients() {
+        Patient patient = entityManager.persist(aPatient());
+        Medication medication = entityManager.persist(aMedicationWithUniqueCode());
+        Enrollment own = persistWithParents(
+            anEnrollmentBuilder()
+                .patient(patient)
+                .medication(medication)
+                .build()
+        );
+        persistWithParents(anEnrollment());
+        flushAndClear();
+
+        List<Enrollment> found = repository.findOpenByPatientId(patient.getId());
+
+        assertThat(found).extracting(Enrollment::getId).containsExactly(own.getId());
+    }
+
     private Enrollment persistWithParents(Enrollment enrollment) {
         entityManager.persist(enrollment.getPatient());
         entityManager.persist(enrollment.getMedication());
@@ -161,7 +196,7 @@ class EnrollmentRepositoryTest {
             .patient(patient)
             .medication(aMedicationWithUniqueCode())
             .build();
-        enrollment.approve(startDate);
+        enrollment.approve(startDate, TODAY);
 
         return persistWithParents(enrollment);
     }

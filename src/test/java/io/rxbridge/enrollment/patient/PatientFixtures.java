@@ -92,6 +92,16 @@ public final class PatientFixtures {
         );
     }
 
+    public static Address anotherPatientAddress() {
+        return new Address(
+            "815 Bush Street",
+            "San Francisco",
+            "US",
+            "CA",
+            "94108"
+        );
+    }
+
     public static Sex aPatientSex() {
         return DEFAULT_SEX;
     }

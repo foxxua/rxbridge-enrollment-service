@@ -1,7 +1,11 @@
 package io.rxbridge.enrollment.common.validation;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
+
 import java.time.LocalDate;
 import java.util.Objects;
+
+import static io.rxbridge.enrollment.common.validation.DomainPreconditionsConstants.*;
 
 public final class DomainPreconditions {
 
@@ -13,15 +17,14 @@ public final class DomainPreconditions {
         text = text.strip();
 
         if (text.isEmpty()) {
-            throw new IllegalArgumentException(
-                "%s must not be empty".formatted(field)
+            throw new DomainValidationException(
+                NOT_EMPTY_TEMPLATE.formatted(field)
             );
         }
 
         if (text.length() > maxLength) {
-            throw new IllegalArgumentException(
-                "%s must be at most %d characters"
-                    .formatted(field, maxLength)
+            throw new DomainValidationException(
+                AT_MOST_CHARACTERS_TEMPLATE.formatted(field, maxLength)
             );
         }
 
@@ -33,8 +36,8 @@ public final class DomainPreconditions {
             return null;
         }
 
-        throw new IllegalArgumentException(
-            "%s must be blank".formatted(field)
+        throw new DomainValidationException(
+            MUST_BLANK_TEMPLATE.formatted(field)
         );
     }
 
@@ -50,9 +53,8 @@ public final class DomainPreconditions {
         Objects.requireNonNull(text, field);
 
         if (!text.matches(regexp)) {
-            throw new IllegalArgumentException(
-                "%s must match to regexp %s"
-                    .formatted(field, regexp)
+            throw new DomainValidationException(
+                MUST_MATCH_REGEXP_TEMPLATE.formatted(field)
             );
         }
 
@@ -64,8 +66,8 @@ public final class DomainPreconditions {
         Objects.requireNonNull(today, field + " today");
 
         if (date.isAfter(today)) {
-            throw new IllegalArgumentException(
-                "%s must not be in the future".formatted(field)
+            throw new DomainValidationException(
+                NOT_IN_FUTURE_TEMPLATE.formatted(field)
             );
         }
 
@@ -77,8 +79,8 @@ public final class DomainPreconditions {
         Objects.requireNonNull(lowerBound, field + " lowerBound");
 
         if (date.isBefore(lowerBound)) {
-            throw new IllegalArgumentException(
-                "%s must not be before %s".formatted(field, lowerBound)
+            throw new DomainValidationException(
+                NOT_BEFORE_TEMPLATE.formatted(field, lowerBound)
             );
         }
 

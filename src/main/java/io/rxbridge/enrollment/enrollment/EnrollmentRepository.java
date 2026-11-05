@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.repository.Repository;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -32,6 +33,24 @@ public interface EnrollmentRepository extends Repository<Enrollment, UUID> {
             medicationId,
             EnrollmentStatus.openStatuses()
         );
+    }
+
+    List<Enrollment> findByPatientIdAndStatusIn(
+        UUID patientId,
+        Collection<EnrollmentStatus> statuses
+    );
+
+    default List<Enrollment> findOpenByPatientId(UUID patientId) {
+        return findByPatientIdAndStatusIn(patientId, EnrollmentStatus.openStatuses());
+    }
+
+    List<Enrollment> findByMedicationIdAndStatusIn(
+        UUID medicationId,
+        Collection<EnrollmentStatus> statuses
+    );
+
+    default List<Enrollment> findOpenByMedicationId(UUID medicationId) {
+        return findByMedicationIdAndStatusIn(medicationId, EnrollmentStatus.openStatuses());
     }
 
 }

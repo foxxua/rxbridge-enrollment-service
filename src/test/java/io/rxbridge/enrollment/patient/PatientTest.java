@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.patient;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -88,11 +89,11 @@ class PatientTest {
 
         @Test
         void rejectsBirthdateInFuture() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aPatientBuilder()
+            assertThatThrownBy(() -> aPatientBuilder()
                     .birthdate(TODAY.plusDays(1))
                     .build())
-                .withMessageContaining("birthdate");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("birthdate");
         }
 
         @Test
@@ -136,11 +137,11 @@ class PatientTest {
             "інвалід@example.com"
         })
         void rejectsInvalidEmail(String input) {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aPatientBuilder()
+            assertThatThrownBy(() -> aPatientBuilder()
                     .email(input)
                     .build())
-                .withMessageContaining("email");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("email");
         }
 
         @Test
@@ -170,21 +171,21 @@ class PatientTest {
 
         @Test
         void rejectsBlankEmail() {
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aPatientBuilder()
+            assertThatThrownBy(() -> aPatientBuilder()
                     .email("   ")
                     .build())
-                .withMessageContaining("email");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("email");
         }
 
         @Test
         void rejectsTooLong() {
             String longEmail = "a".repeat(EMAIL_MAX_LENGTH - "@example.com".length() + 1) + "@example.com";
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> aPatientBuilder()
+            assertThatThrownBy(() -> aPatientBuilder()
                     .email(longEmail)
                     .build())
-                .withMessageContaining("email");
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("email");
         }
 
         @Test
@@ -213,9 +214,9 @@ class PatientTest {
             Patient patient = aPatient();
             String emailBefore = patient.getEmail();
 
-            assertThatIllegalArgumentException()
-                .isThrownBy(() -> patient.changeEmail(input))
-                .withMessageContaining("email");
+            assertThatThrownBy(() -> patient.changeEmail(input))
+                .isInstanceOf(DomainValidationException.class)
+                .hasMessageContaining("email");
             assertThat(patient.getEmail()).isEqualTo(emailBefore);
         }
 

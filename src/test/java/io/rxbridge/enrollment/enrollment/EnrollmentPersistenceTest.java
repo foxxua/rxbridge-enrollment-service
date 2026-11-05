@@ -80,7 +80,7 @@ class EnrollmentPersistenceTest {
         @Test
         void writesDatesToTheirColumns() {
             Enrollment enrollment = anEnrollment();
-            enrollment.approve(TODAY.minusDays(3));
+            enrollment.approve(TODAY.minusDays(3), TODAY);
             enrollment.complete(TODAY.minusDays(1), TODAY);
             UUID id = persistAndReload(enrollment).getId();
 
@@ -278,14 +278,14 @@ class EnrollmentPersistenceTest {
         static Stream<Named<Consumer<Enrollment>>> toOpenStatus() {
             return Stream.of(
                 Named.of("PENDING" , r -> { }),
-                Named.of("APPROVED", r -> r.approve(START_DATE))
+                Named.of("APPROVED", r -> r.approve(START_DATE, TODAY))
             );
         }
 
         static Stream<Named<Consumer<Enrollment>>> toCloseStatus() {
             return Stream.of(
                 Named.of("COMPLETED", r -> {
-                    r.approve(START_DATE);
+                    r.approve(START_DATE, TODAY);
                     r.complete(CLOSE_DATE, TODAY);
                 }),
                 Named.of("REJECTED" , r -> r.reject(REJECT_CLOSURE, CLOSE_DATE, TODAY)),
