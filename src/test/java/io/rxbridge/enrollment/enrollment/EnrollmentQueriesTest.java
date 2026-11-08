@@ -1,6 +1,8 @@
 package io.rxbridge.enrollment.enrollment;
 
 import io.rxbridge.enrollment.TestcontainersConfiguration;
+import io.rxbridge.enrollment.medication.Medication;
+import io.rxbridge.enrollment.medication.MedicationView;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,13 +42,14 @@ class EnrollmentQueriesTest {
     }
 
     @Test
-    void enrollmentFoundByIdContainsMedicationName() {
+    void enrollmentFoundByIdContainsMedication() {
         Enrollment enrollment = anEnrollment();
         UUID id = persisted(enrollment);
 
         EnrollmentView view = queries.enrollment(id);
 
-        assertThat(view.medicationName()).isEqualTo(enrollment.getMedication().getName());
+        assertThat(view.medication())
+            .isEqualTo(MedicationView.from(enrollment.getMedication()));
     }
 
     @Test
@@ -60,8 +63,8 @@ class EnrollmentQueriesTest {
         );
 
         assertThat(page.getContent())
-            .extracting(EnrollmentView::medicationName)
-            .containsExactly(enrollment.getMedication().getName());
+            .extracting(EnrollmentView::medication)
+            .containsExactly(MedicationView.from(enrollment.getMedication()));
     }
 
     @Test

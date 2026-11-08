@@ -1,23 +1,31 @@
 package io.rxbridge.enrollment.enrollment;
 
+import io.rxbridge.enrollment.medication.MedicationView;
+
 import java.time.LocalDate;
 import java.util.UUID;
 
 public record EnrollmentView(
     UUID id,
-    String medicationName,
+    MedicationView medication,
     EnrollmentStatus status,
     LocalDate startDate,
-    LocalDate closeDate
+    ClosureView closure
 ) {
 
     static EnrollmentView from(Enrollment enrollment) {
         return new EnrollmentView(
             enrollment.getId(),
-            enrollment.getMedication().getName(),
+            MedicationView.from(enrollment.getMedication()),
             enrollment.getStatus(),
             enrollment.getStartDate(),
-            enrollment.getCloseDate()
+            (enrollment.getCloseDate() == null)
+                ? null
+                : new ClosureView(
+                    enrollment.getCloseReason(),
+                    enrollment.getOtherReason(),
+                    enrollment.getCloseDate()
+                )
         );
     }
 

@@ -1,5 +1,6 @@
 package io.rxbridge.enrollment.enrollment;
 
+import io.rxbridge.enrollment.medication.MedicationView;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -23,7 +24,7 @@ public class EnrollmentViewTest {
         assertThat(view).isEqualTo(
             new EnrollmentView(
                 ENROLLMENT_ID,
-                enrollment.getMedication().getName(),
+                MedicationView.from(enrollment.getMedication()),
                 EnrollmentStatus.APPROVED,
                 START_DATE,
                 null
@@ -39,7 +40,28 @@ public class EnrollmentViewTest {
         EnrollmentView view = EnrollmentView.from(enrollment);
 
         assertThat(view.startDate()).isEqualTo(START_DATE);
-        assertThat(view.closeDate()).isEqualTo(CLOSE_DATE);
+        assertThat(view.closure()).isEqualTo(
+            new ClosureView(
+                CloseReason.THERAPY_COMPLETED,
+                null,
+                CLOSE_DATE
+            )
+        );
+    }
+
+    @Test
+    void rejectedEnrollmentKeepsItsOtherReason() {
+        Enrollment enrollment = withId(aRejectedEnrollmentOtherReason());
+
+        EnrollmentView view = EnrollmentView.from(enrollment);
+
+        assertThat(view.closure()).isEqualTo(
+            new ClosureView(
+                CloseReason.OTHER,
+                OTHER_REASON,
+                CLOSE_DATE
+            )
+        );
     }
 
     private Enrollment withId(Enrollment enrollment) {

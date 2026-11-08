@@ -53,6 +53,7 @@ class ClosureTest {
         assertThatThrownBy(() -> new Closure(
                 CloseReason.OTHER,
                 input))
+            .isInstanceOf(DomainValidationException.class)
             .hasMessageContaining("otherReason");
     }
 

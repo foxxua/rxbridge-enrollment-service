@@ -1,5 +1,7 @@
 package io.rxbridge.enrollment.enrollment;
 
+import io.rxbridge.enrollment.common.error.DomainValidationException;
+
 import java.util.Objects;
 
 import static io.rxbridge.enrollment.common.validation.DomainPreconditions.*;
@@ -12,8 +14,14 @@ public record Closure(
 
     public Closure {
         Objects.requireNonNull(closeReason, "closeReason");
-        otherReason = (closeReason == CloseReason.OTHER)
-            ? requireText(otherReason, "otherReason", OTHER_REASON_MAX_LENGTH)
+        otherReason = validateOtherReason(closeReason, otherReason);
+    }
+
+    private static String validateOtherReason(CloseReason closeReason, String otherReason) {
+        return (closeReason == CloseReason.OTHER)
+            ? requireText((otherReason == null) ? "" : otherReason,
+                "otherReason",
+                OTHER_REASON_MAX_LENGTH)
             : requireAbsent(otherReason, "otherReason");
     }
 

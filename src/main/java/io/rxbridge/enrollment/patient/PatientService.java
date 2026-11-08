@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Service
@@ -15,6 +16,24 @@ public class PatientService {
     private final PatientRepository patients;
     private final ApplicationEventPublisher events;
     private final BusinessCalendar calendar;
+
+    @Transactional
+    public UUID register(
+        PersonName personName,
+        String email,
+        Address address,
+        Sex sex,
+        LocalDate birthdate
+    ) {
+        return patients.save(new Patient(
+            personName,
+            email,
+            address,
+            sex,
+            birthdate,
+            calendar.today()
+        )).getId();
+    }
 
     @Transactional
     public void activate(UUID patientId) {
@@ -32,7 +51,7 @@ public class PatientService {
 
     @Transactional
     public void changeEmail(UUID patientId, String email) {
-        find(patientId).changeEmail(email);
+        find(patientId).changeEmail(Patient.normalizeEmail(email));
     }
 
     @Transactional
