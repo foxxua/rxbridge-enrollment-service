@@ -10,7 +10,6 @@ import io.rxbridge.enrollment.patient.PatientDeactivated;
 import io.rxbridge.enrollment.patient.PatientNotFoundException;
 import io.rxbridge.enrollment.patient.PatientRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.UUID;
+
+import static io.rxbridge.enrollment.common.persistence.DatabaseConstraints.violates;
 
 @Service
 @RequiredArgsConstructor
@@ -92,11 +93,6 @@ public class EnrollmentService {
     private Enrollment find(UUID enrollmentId) {
         return enrollments.findById(enrollmentId)
             .orElseThrow(() -> new EnrollmentNotFoundException(enrollmentId));
-    }
-
-    private static boolean violates(DataIntegrityViolationException e, String constraintName) {
-        return e.getCause() instanceof ConstraintViolationException violation
-            && constraintName.equals(violation.getConstraintName());
     }
 
 }

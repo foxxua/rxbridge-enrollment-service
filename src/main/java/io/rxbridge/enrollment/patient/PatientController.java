@@ -36,7 +36,7 @@ class PatientController {
 
     record RegisterRequest(
         @Valid @NotNull PersonNameRequest personName,
-        @NotBlank @Size(max = EMAIL_MAX_LENGTH) String email,
+        @NotBlank @Email @Size(max = EMAIL_MAX_LENGTH) String email,
         @Valid @NotNull AddressRequest address,
         @NotNull Sex sex,
         @NotNull LocalDate birthdate
@@ -75,7 +75,7 @@ class PatientController {
     ) { }
 
     record EmailRequest(
-        @NotBlank @Size(max = EMAIL_MAX_LENGTH) String email
+        @NotBlank @Email @Size(max = EMAIL_MAX_LENGTH) String email
     ) { }
 
     private final PatientService patients;
