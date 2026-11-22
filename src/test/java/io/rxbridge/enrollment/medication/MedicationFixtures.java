@@ -15,8 +15,7 @@ public final class MedicationFixtures {
     private static final String DEFAULT_SIDE_EFFECTS = """
         It can cause irritation and bleeding in the stomach lining.
         Long-term use may increase the risk of gastrointestinal ulcers.
-        It can trigger allergic reactions or asthma attacks in sensitive individuals.
-        """;
+        It can trigger allergic reactions or asthma attacks in sensitive individuals.""";
 
     private MedicationFixtures() { }
 

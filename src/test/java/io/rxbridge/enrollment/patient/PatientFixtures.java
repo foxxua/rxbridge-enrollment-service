@@ -78,8 +78,16 @@ public final class PatientFixtures {
         return new PersonName(DEFAULT_FIRST_NAME, DEFAULT_LAST_NAME);
     }
 
+    public static PersonName anotherPatientPersonName() {
+        return new PersonName("Agatha", "Christie");
+    }
+
     public static String aPatientEmail() {
         return DEFAULT_EMAIL;
+    }
+
+    public static String anotherPatientEmail() {
+        return "agatha_christie@example.com";
     }
 
     public static Address aPatientAddress() {

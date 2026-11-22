@@ -1,6 +1,7 @@
 package io.rxbridge.enrollment.patient;
 
 import io.rxbridge.enrollment.common.calendar.BusinessCalendar;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,13 @@ class PatientServiceTest {
 
     private final List<Object> published = new ArrayList<>();
 
+    private PatientService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new PatientService(patients, published::add, calendar);
+    }
+
     @Nested
     class Activate {
 
@@ -37,7 +45,6 @@ class PatientServiceTest {
         void activatesPatient() {
             Patient patient = anInactivePatient();
             given(patients.findById(PATIENT_ID)).willReturn(Optional.of(patient));
-            var service = createPatientService();
 
             service.activate(PATIENT_ID);
 
@@ -47,7 +54,6 @@ class PatientServiceTest {
         @Test
         void rejectsActivatingForUnknownPatient() {
             given(patients.findById(PATIENT_ID)).willReturn(Optional.empty());
-            var service = createPatientService();
 
             assertThatExceptionOfType(PatientNotFoundException.class)
                 .isThrownBy(() -> service.activate(PATIENT_ID));
@@ -83,7 +89,7 @@ class PatientServiceTest {
         void publishesNothingWhenPatientIsAlreadyInactive() {
             given(patients.findById(PATIENT_ID)).willReturn(Optional.of(anInactivePatient()));
 
-            createPatientService().deactivate(PATIENT_ID);
+            service.deactivate(PATIENT_ID);
 
             assertThat(published).isEmpty();
         }
@@ -91,7 +97,6 @@ class PatientServiceTest {
         @Test
         void publishesNothingForUnknownPatient() {
             given(patients.findById(PATIENT_ID)).willReturn(Optional.empty());
-            var service = createPatientService();
 
             assertThatExceptionOfType(PatientNotFoundException.class)
                 .isThrownBy(() -> service.deactivate(PATIENT_ID));
@@ -107,7 +112,6 @@ class PatientServiceTest {
         void changesEmail() {
             Patient patient = aPatient();
             given(patients.findById(PATIENT_ID)).willReturn(Optional.of(patient));
-            var service = createPatientService();
 
             service.changeEmail(PATIENT_ID, "another_test_email@example.com");
 
@@ -117,7 +121,6 @@ class PatientServiceTest {
         @Test
         void rejectsEmailChangeForUnknownPatient() {
             given(patients.findById(PATIENT_ID)).willReturn(Optional.empty());
-            var service = createPatientService();
 
             assertThatExceptionOfType(PatientNotFoundException.class)
                 .isThrownBy(() -> service.changeEmail(PATIENT_ID, "another_test_email@example.com"));
@@ -132,7 +135,6 @@ class PatientServiceTest {
         void changesAddress() {
             Patient patient = aPatient();
             given(patients.findById(PATIENT_ID)).willReturn(Optional.of(patient));
-            var service = createPatientService();
 
             service.changeAddress(PATIENT_ID, anotherPatientAddress());
 
@@ -142,16 +144,11 @@ class PatientServiceTest {
         @Test
         void rejectsAddressChangeForUnknownPatient() {
             given(patients.findById(PATIENT_ID)).willReturn(Optional.empty());
-            var service = createPatientService();
 
             assertThatExceptionOfType(PatientNotFoundException.class)
                 .isThrownBy(() -> service.changeAddress(PATIENT_ID, anotherPatientAddress()));
         }
 
-    }
-
-    private PatientService createPatientService() {
-        return new PatientService(patients, published::add, calendar);
     }
 
 }

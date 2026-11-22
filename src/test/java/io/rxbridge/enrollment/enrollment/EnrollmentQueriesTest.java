@@ -1,7 +1,6 @@
 package io.rxbridge.enrollment.enrollment;
 
 import io.rxbridge.enrollment.TestcontainersConfiguration;
-import io.rxbridge.enrollment.medication.Medication;
 import io.rxbridge.enrollment.medication.MedicationView;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;

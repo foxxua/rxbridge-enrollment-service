@@ -1,6 +1,7 @@
 package io.rxbridge.enrollment.medication;
 
 import io.rxbridge.enrollment.common.calendar.BusinessCalendar;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -30,6 +31,39 @@ class MedicationServiceTest {
 
     private final List<Object> published = new ArrayList<>();
 
+    private MedicationService service;
+
+    @BeforeEach
+    void setUp() {
+        service = new MedicationService(medications, published::add, calendar);
+    }
+
+    @Nested
+    class Rename {
+
+        @Test
+        void renamesMedication() {
+            Medication medication = aMedication();
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.of(medication));
+
+            service.rename(MEDICATION_ID, "New Medication Name");
+
+            assertThat(medication.getName()).isEqualTo("New Medication Name");
+        }
+
+        @Test
+        void rejectsRenamingForUnknownMedication() {
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.rename(MEDICATION_ID, "New Medication Name"))
+                .isInstanceOfSatisfying(
+                    MedicationNotFoundException.class,
+                    e -> assertThat(e.medicationId()).isEqualTo(MEDICATION_ID)
+                );
+        }
+
+    }
+
     @Nested
     class Activate {
 
@@ -37,7 +71,6 @@ class MedicationServiceTest {
         void activatesMedication() {
             Medication medication = anInactiveMedication();
             given(medications.findById(MEDICATION_ID)).willReturn(Optional.of(medication));
-            var service = createMedicationService();
 
             service.activate(MEDICATION_ID);
 
@@ -47,10 +80,12 @@ class MedicationServiceTest {
         @Test
         void rejectsActivatingForUnknownMedication() {
             given(medications.findById(MEDICATION_ID)).willReturn(Optional.empty());
-            var service = createMedicationService();
 
-            assertThatExceptionOfType(MedicationNotFoundException.class)
-                .isThrownBy(() -> service.activate(MEDICATION_ID));
+            assertThatThrownBy(() -> service.activate(MEDICATION_ID))
+                .isInstanceOfSatisfying(
+                    MedicationNotFoundException.class,
+                    e -> assertThat(e.medicationId()).isEqualTo(MEDICATION_ID)
+                );
         }
 
     }
@@ -83,7 +118,7 @@ class MedicationServiceTest {
         void publishesNothingWhenMedicationIsAlreadyInactive() {
             given(medications.findById(MEDICATION_ID)).willReturn(Optional.of(anInactiveMedication()));
 
-            createMedicationService().deactivate(MEDICATION_ID);
+            service.deactivate(MEDICATION_ID);
 
             assertThat(published).isEmpty();
         }
@@ -91,17 +126,67 @@ class MedicationServiceTest {
         @Test
         void publishesNothingForUnknownMedication() {
             given(medications.findById(MEDICATION_ID)).willReturn(Optional.empty());
-            var service = createMedicationService();
 
-            assertThatExceptionOfType(MedicationNotFoundException.class)
-                .isThrownBy(() -> service.deactivate(MEDICATION_ID));
+            assertThatThrownBy(() -> service.deactivate(MEDICATION_ID))
+                .isInstanceOfSatisfying(
+                    MedicationNotFoundException.class,
+                    e -> assertThat(e.medicationId()).isEqualTo(MEDICATION_ID)
+                );
             assertThat(published).isEmpty();
         }
 
     }
 
-    private MedicationService createMedicationService() {
-        return new MedicationService(medications, published::add, calendar);
+    @Nested
+    class ChangeDescription {
+
+        @Test
+        void changesDescriptionOfMedication() {
+            Medication medication = aMedication();
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.of(medication));
+
+            service.changeDescription(MEDICATION_ID, "New Medication Description");
+
+            assertThat(medication.getDescription()).isEqualTo("New Medication Description");
+        }
+
+        @Test
+        void rejectsChangingDescriptionForUnknownMedication() {
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.changeDescription(MEDICATION_ID, "New Medication Description"))
+                .isInstanceOfSatisfying(
+                    MedicationNotFoundException.class,
+                    e -> assertThat(e.medicationId()).isEqualTo(MEDICATION_ID)
+                );
+        }
+
+    }
+
+    @Nested
+    class ChangeSideEffects {
+
+        @Test
+        void changesSideEffectsOfMedication() {
+            Medication medication = aMedication();
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.of(medication));
+
+            service.changeSideEffects(MEDICATION_ID, "New Medication Side Effects");
+
+            assertThat(medication.getSideEffects()).isEqualTo("New Medication Side Effects");
+        }
+
+        @Test
+        void rejectsChangingSideEffectsForUnknownMedication() {
+            given(medications.findById(MEDICATION_ID)).willReturn(Optional.empty());
+
+            assertThatThrownBy(() -> service.changeSideEffects(MEDICATION_ID, "New Medication Side Effects"))
+                .isInstanceOfSatisfying(
+                    MedicationNotFoundException.class,
+                    e -> assertThat(e.medicationId()).isEqualTo(MEDICATION_ID)
+                );
+        }
+
     }
 
 }

@@ -2,22 +2,21 @@ package io.rxbridge.enrollment.enrollment;
 
 import io.rxbridge.enrollment.medication.MedicationView;
 import org.junit.jupiter.api.Test;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 
 import static io.rxbridge.enrollment.enrollment.EnrollmentFixtures.*;
 import static io.rxbridge.enrollment.common.TestDates.*;
+import static io.rxbridge.enrollment.common.web.TestHelpers.*;
 
 public class EnrollmentViewTest {
 
-    private static final UUID ENROLLMENT_ID = UUID.fromString("00000000-0000-0000-0000-000000000042");
-
     @Test
     void approvedEnrollmentHasNoClosingDate() {
-        Enrollment enrollment = withId(anApprovedEnrollment());
+        Enrollment enrollment = withId(
+            anApprovedEnrollment(),
+            ENROLLMENT_ID
+        );
 
         EnrollmentView view = EnrollmentView.from(enrollment);
 
@@ -34,7 +33,10 @@ public class EnrollmentViewTest {
 
     @Test
     void completedEnrollmentKeepsBothDates() {
-        Enrollment enrollment = withId(anApprovedEnrollment());
+        Enrollment enrollment = withId(
+            anApprovedEnrollment(),
+            ENROLLMENT_ID
+        );
         enrollment.complete(CLOSE_DATE, TODAY);
 
         EnrollmentView view = EnrollmentView.from(enrollment);
@@ -51,7 +53,10 @@ public class EnrollmentViewTest {
 
     @Test
     void rejectedEnrollmentKeepsItsOtherReason() {
-        Enrollment enrollment = withId(aRejectedEnrollmentOtherReason());
+        Enrollment enrollment = withId(
+            aRejectedEnrollmentOtherReason(),
+            ENROLLMENT_ID
+        );
 
         EnrollmentView view = EnrollmentView.from(enrollment);
 
@@ -62,11 +67,6 @@ public class EnrollmentViewTest {
                 CLOSE_DATE
             )
         );
-    }
-
-    private Enrollment withId(Enrollment enrollment) {
-        ReflectionTestUtils.setField(enrollment, "id", ENROLLMENT_ID);
-        return enrollment;
     }
 
 }

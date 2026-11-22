@@ -1,3 +1,14 @@
+management:
+  endpoint:
+    health:
+      show-components: always
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include:
+          - health
+          - info
 spring:
   application:
     name: rxbridge-enrollment-service
@@ -5,5 +16,14 @@ spring:
     hibernate:
       ddl-auto: validate
     open-in-view: false
+  threads:
+    virtual:
+      enabled: true
+springdoc:
+  default-produces-media-type: application/json
+  paths-to-match:
+    - /patients/**
+    - /enrollments/**
+    - /medications/**
 rxbridge:
   time-zone: America/New_York
